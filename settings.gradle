@@ -1,0 +1,6 @@
+rootProject.name = 'template-sample'
+
+include "bom"
+
+include "java-template"
+

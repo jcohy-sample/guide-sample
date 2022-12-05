@@ -1,0 +1,35 @@
+= template-sample
+Sample 项目模板工程
+
+为各种示例 demo 的模板工程。
+
+== 如何使用
+
+* 下载 https://github.com/jcohy-sample/java-sample.git[https://github.com/jcohy-sample/java-sample.git]
+* 修改项目名以及 setting.gradle 文件
+* 多页面默认使用 `asciidoctorMultipage` （*.adoc） 任务，单页面使用 `asciidoctor` （index.singleadoc）任务，pdf 使用 `asciidoctorPdf` 任务。如有需要，可以修改 `gradle/docs.gradle` 文件
+* 设置 oss 上传地址，buildSrc 目录下的 OssUploadPlugins 文件。
++
+[source,java]
+====
+// 设置 oss 上传路径。
+extension.setBucket("jcohy-study");
+extension.getUpload().setPrefix("template");
+====
+* 添加文件属性，修改 buildSrc 目录下的 JcohyAsciidoctorPlugins 文件。
+[source,java]
+----
+attributes.put("java-code", project.getRootProject().getProjectDir() + "/src/main/java/com/jcohy/sample");
+attributes.put("kotlin-code", project.getRootProject().getProjectDir() + "/src/main/kotlin/com/jcohy/sample");
+attributes.put("go-code", project.getRootProject().getProjectDir() + "/src/main/go/com/jcohy/sample");
+attributes.put("oss-images", "https://study.jcohy.com/images/java");
+----
+
+== 文件归档
+
+聚合构件文档（aggregatedAsciidoctor），如何需要同时构件单页面，多页面，pdf，可以使用此任务。
+
+构建后的文件在 `build/generated` 目录下
+
+使用 `zip` 任务对文件进行打包。
+

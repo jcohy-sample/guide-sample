@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
 
+import com.jcohy.sample.java.juc.Account;
+
 /**
  * 描述: .
  *
@@ -17,9 +19,20 @@ import java.util.Properties;
  * @since 1.0.0
  */
 public class Test {
-    public static void main(String[] args) {
-        short s1 = 1;
-        s1 = (short) (s1 + 1);
-        s1 += 1;
+    public static void main(String[] args) throws Exception {
+        new Test().setA();
+    }
+    synchronized void setA() throws Exception{
+        System.out.println("A");
+        Thread.sleep(1000);
+        setB();
+    }
+
+     void setB() throws Exception{
+         synchronized(Account.class) {
+             System.out.println("B");
+             Thread.sleep(1000);
+         }
+
     }
 }

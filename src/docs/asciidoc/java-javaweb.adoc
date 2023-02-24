@@ -12,12 +12,12 @@ XML文档定义分为DTD和Schema两种形式,二者都是对XML语法的约束,
 
 XML的主要作用有两个方面:数据交换和信息配置.在做数据交换时,XML将数据用标签组装成起来,然后压缩打包加密后通过网络传送给接收者,接收解密与解压缩后再从XML文件中还原相关信息进行处理.
 
-XML曾经是异构系统间交换数据的事实标准,但此项功能几乎已经被JSON(JavaScript Object Notation)取而代之.当然,目前很多软件仍然使用XML来存储配置信息,我们在很多项目中通常也会将作为配置信息的硬代码写在XML文件中,Java的很多框架也是这么做的,而且这些框架都选择了dom4j作为处理XML的工具,因为Sun公司的官方API实在不怎么好用.
+XML曾经是异构系统间交换数据的事实标准,但此项功能几乎已经被 JSON(JavaScript Object Notation)取而代之.当然,目前很多软件仍然使用XML来存储配置信息,我们在很多项目中通常也会将作为配置信息的硬代码写在XML文件中,Java的很多框架也是这么做的,而且这些框架都选择了dom4j作为处理XML的工具,因为Sun公司的官方API实在不怎么好用.
 
-补充:现在有很多时髦的软件(如Sublime)已经开始将配置文件书写成JSON格式,我们已经强烈的感受到XML的另一项功能也将逐渐被业界抛弃.
+补充:现在有很多时髦的软件(如Sublime)已经开始将配置文件书写成 JSON 格式,我们已经强烈的感受到 XML 的另一项功能也将逐渐被业界抛弃.
 
 [[guide-web-3]]
-== 阐述JDBC操作数据库的步骤.
+== 阐述 JDBC 操作数据库的步骤.
 
 下面的代码以连接本机的Oracle数据库为例,演示JDBC操作数据库的步骤.
 
@@ -169,7 +169,7 @@ DAO模式实际上包含了两个模式,一是Data Accessor(数据访问器),二
 
 [[guide-web-7-4-tbl]]
 |===
-| 时间 | 转账事务A              | 取款事务B                |
+| 时间 | 转账事务A              | 取款事务B
 
 | T1   |                             |     开始事务
 
@@ -215,7 +215,7 @@ Connection提供了事务处理的方法,通过调用setAutoCommit(false)可以�
 image::{oss-images}/guide-2.jpg[]
 
 [[guide-web-9]]
-== JDBC能否处理Blob和Clob？
+== JDBC 能否处理 Blob 和 Clob？
 
 Blob是指二进制大对象(Binary Large Object),而Clob是指大字符对象(Character Large Objec),因此其中Blob是为存储大的二进制数据而设计的,而Clob是为存储大的文本数据而设计的.JDBC的PreparedStatement和ResultSet都提供了相应的方法来支持Blob和Clob操作.下面的代码展示了如何使用JDBC操作LOB:
 

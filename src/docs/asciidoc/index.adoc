@@ -1,40 +1,23 @@
-[[java]]
+[[jcohy-study-note]]
 = 面试指南
+Jcohy
 
 ****
 作者网页:
 https://www.jcohy.com[*https://www.jcohy.com*]
 
 文档翻译网址:
-https://www.jcohy.com[*https://www.jcohy.com/projects*]
+https://docs.jcohy.com[*https://docs.jcohy.com*]
 
 我的学习笔记,记录学习过程中的笔记以及遇到的问题,以及我的一些经验总结.如果出现链接失效,或者想知道更多的内容等情况可以提交 https://github.com/jcohy/jcohy-issues/issues[Issues] 提醒我修改相关内容.
 ****
 
-[horizontal]
+include::java/index.adoc[leveloffset=+1]
 
-<<java-base#guide-java,Java 基础面试>> :: Java 基础面试.
+include::network.adoc[leveloffset=+1]
 
-<<java-collection#guide-collection,Java 集合>> :: Java 集合.
+include::os.adoc[leveloffset=+1]
 
-<<java-reflect#guide-reflect,Java 反射>> :: Java 反射.
+include::sql.adoc[leveloffset=+1]
 
-<<java-stream#guide-stream,Java Stream>> :: Java Stream.
-
-<<java-thread#guide-thread,Java 线程>> :: Java 线程.
-
-<<java-jvm#guide-jvm,Java JVM>> :: Java JVM.
-
-<<java-javaweb#guide-web,Java Web>> :: Java Web.
-
-<<java-javaee#guide-ee,Java EE>> :: Java EE.
-
-<<socket#guide-socket,Java Socket>> :: Java Socket.
-
-<<network#guide-network,计算机网络>> :: 计算机网络.
-
-<<os#guide-os,操作系统>> :: 操作系统.
-
-<<sql#guide-sql,Sql>> :: Sql.
-
-<<others#guide-other,Other>> :: Other.
+include::others.adoc[leveloffset=+1]

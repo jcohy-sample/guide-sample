@@ -4,7 +4,14 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Properties;
+import java.util.Queue;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.jcohy.sample.java.juc.Account;
 
@@ -20,6 +27,7 @@ import com.jcohy.sample.java.juc.Account;
  */
 public class Test {
     public static void main(String[] args) throws Exception {
+		ConcurrentHashMap
         new Test().setA();
     }
     synchronized void setA() throws Exception{

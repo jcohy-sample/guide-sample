@@ -2,7 +2,7 @@
 = java 线程
 
 [[guide-thread-1]]
-== Thread 类的 sleep() 方法和对象的 wait() 方法都可以让线程暂停执行,它们有什么区别?
+== Thread 类的 `sleep()` 方法和对象的 `wait()` 方法都可以让线程暂停执行,它们有什么区别?
 
 sleep() 方法(休眠)是线程类(Thread)的静态方法，调用此方法会让当前线程暂停执行指定的时间，将执行机会(CPU)让给其他线程，但是对象的锁依然保持，因此休眠时间结束后会自动恢复(线程回到就绪状态。
 请参考 <<guide-thread-10>>。
@@ -39,6 +39,7 @@ sleep() 方法(休眠)是线程类(Thread)的静态方法，调用此方法会�
 在完成对资源的访问后,线程必须向信号量归还许可(调用 Semaphore 对象的 `release()` 方法).
 
 下面的例子演示了 100 个线程同时向一个银行账户中存入 1 元钱,在没有使用同步机制和使用同步机制情况下的执行情况.
+
 银行账户类:
 
 [source,java]
@@ -73,6 +74,7 @@ public class Account {
 }
 
 ----
+
 存钱线程类:
 
 [source,java]
@@ -153,6 +155,7 @@ public class Account {
     }
 }
 ----
+
 在线程调用存款方法时对银行账户进行同步
 
 [source,java]
@@ -177,6 +180,7 @@ public class AddMoneyThread implements Runnable {
     }
 }
 ----
+
 通过 Java 5 显示的锁机制,为每个银行账户创建一个锁对象,在存款操作进行加锁和解锁的操作
 
 [source,java]
@@ -278,13 +282,16 @@ class Test {
 [[guide-thread-6]]
 == synchronized 关键字的用法？
 
-`synchronized` 关键字可以将对象或者方法标记为同步,以实现对对象和方法的互斥访问,可以用 `synchronized(对象) { … }` 定义同步代码块,或者在声明方法时将 `synchronized` 作为方法的修饰符.在上面的例子中已经展示了 `synchronized` 关键字的用法.
+`synchronized` 关键字可以将对象或者方法标记为同步,以实现对对象和方法的互斥访问,可以用 `synchronized(对象) { … }` 定义同步代码块，
+或者在声明方法时将 `synchronized` 作为方法的修饰符.在上面的例子中已经展示了 `synchronized` 关键字的用法.
 
 [[guide-thread-7]]
 == 举例说明同步和异步.
 
-如果系统中存在临界资源(资源数量少于竞争资源的线程数量的资源),例如正在写的数据以后可能被另一个线程读到,或者正在读的数据可能已经被另一个线程写过了,那么这些数据就必须进行同步存取(数据库操作中的排他锁就是最好的例子).
-当应用程序在对象上调用了一个需要花费很长时间来执行的方法,并且不希望让程序等待方法的返回时,就应该使用异步编程,在很多情况下采用异步途径往往更有效率.事实上,所谓的同步就是指阻塞式操作,而异步就是非阻塞式操作.
+如果系统中存在临界资源(资源数量少于竞争资源的线程数量的资源),例如正在写的数据以后可能被另一个线程读到,或者正在读的数据可能已经被另一个线程写过了，
+那么这些数据就必须进行同步存取(数据库操作中的排他锁就是最好的例子)。
+
+当应用程序在对象上调用了一个需要花费很长时间来执行的方法，并且不希望让程序等待方法的返回时,就应该使用异步编程,在很多情况下采用异步途径往往更有效率.事实上,所谓的同步就是指阻塞式操作， 而异步就是非阻塞式操作.
 
 [[guide-thread-8]]
 == 启动一个线程是调用 run() 还是 start() 方法？
@@ -298,7 +305,6 @@ class Test {
 
 * `newSingleThreadExecutor`:创建一个单线程的线程池.这个线程池只有一个线程在工作,也就是相当于单线程串行执行所有任务.如果这个唯一的线程因为异常结束,那么会有一个新的线程来替代它.此线程池保证所有任务的执行顺序按照任务的提交顺序执行.
 * `newFixedThreadPool`:创建固定大小的线程池.每次提交一个任务就创建一个线程,直到线程达到线程池的最大大小.线程池的大小一旦达到最大值就会保持不变,如果某个线程因为执行异常而结束,那么线程池会补充一个新线程.
-
 * `newCachedThreadPool`:创建一个可缓存的线程池.如果线程池的大小超过了处理任务所需要的线程,那么就会回收部分空闲(60 秒不执行任务)的线程,当任务数增加时,此线程池又可以智能的添加新线程来处理任务.此线程池不会对线程池大小做限制,线程池大小完全依赖于操作系统(或者说JVM)能够创建的最大线程大小.
 * `newScheduledThreadPool`:创建一个大小无限的线程池.此线程池支持定时以及周期性执行任务的需求.
 
@@ -315,7 +321,55 @@ image::{oss-images}/guide-1.jpg[]
 
 Lock 是 Java 5 以后引入的新的 API,和关键字 synchronized 相比主要相同点:Lock 能完成 synchronized 所实现的所有功能
 
-主要不同点:Lock 有比 `synchronized` 更精确的线程语义和更好的性能,而且不强制性的要求一定要获得锁.`synchronized` 会自动释放锁,而 Lock 一定要求程序员手工释放,并且最好在 `finally` 块中释放(这是释放外部资源的最好的地方).
+
+|===
+|区别 | synchronized | Lock
+
+| 语法
+| Synchronized 是 Java 的关键字，可以直接应用于方法或代码块中。
+| Lock 是一个接口，需要实例化一个 Lock 对象，并使用 lock() 和 unlock() 方法来手动控制同步。
+
+| 锁的释放
+| 1、以获取锁的线程执行完同步代码，释放锁 2、线程执行发生异常，jvm 会让线程释放锁
+| 在 finally 中必须释放锁，不然容易造成线程死锁
+
+| 锁的释放（死锁产生）
+| 在发生异常时候会自动释放占有的锁，因此不会出现死锁
+| 发生异常时候，不会主动释放占有的锁，必须手动 unlock 来释放锁，可能引起死锁的发生
+
+| 锁的获取
+| 假设 A 线程获得锁，B 线程等待。如果 A 线程阻塞，B 线程会一直等待
+| 分情况而定，Lock 有多个锁获取的方式，大致就是可以尝试获得锁，线程可以不用一直等待(可以通过 `tryLock` 判断有没有锁)
+
+| 锁的状态
+| 无法判断
+| 可以判断(tryLock() ,getHoldCount(),isHeldByCurrentThread())
+
+| 锁的类型
+| 可重入(即同一个线程可以重复获取同一把锁) 不可中断 非公平
+| 可重入 可判断( `lockInterruptibly()` ) 可公平（两者皆可）
+
+| 性能
+| 少量同步
+| 大量同步。Lock 可以提高多个线程进行读操作的效率。（可以通过readwritelock实现读写分离）。
+在资源竞争不是很激烈的情况下，Synchronized的性能要优于ReetrantLock，但是在资源竞争很激烈的情况下，Synchronized的性能会下降几十倍，但是ReetrantLock的性能能维持常态；
+ReentrantLock提供了多样化的同步，比如有时间限制的同步，可以被Interrupt的同步（synchronized的同步是不能Interrupt的）等。在资源竞争不激烈的情形下，性能稍微比synchronized差点点。但是当同步非常激烈的时候，synchronized的性能一下子能下降好几十倍。而ReentrantLock确还能维持常态。
+
+
+| 调度
+| 使用 Object 对象本身的 wait 、notify、notifyAll 调度机制
+| 可以使用 Condition 进行线程之间的调度
+
+| 用法
+| 在需要同步的对象中加入此控制，synchronized 可以加在方法上，也可以加在特定代码块中，括号中表示需要锁的对象。
+| 一般使用 ReentrantLock 类做为锁。在加锁和解锁处需要通过 `lock()` 和 `unlock()` 显示指出。所以一般会在 finally 块中写 `unlock()` 以防死锁。
+
+| 底层实现
+| 底层使用指令码方式来控制锁的，映射成字节码指令就是增加来两个指令：`monitorenter` 和 `monitorexit`。当线程执行遇到 `monitorenter` 指令时会尝试获取内置锁，如果获取锁则锁计数器+1，如果没有获取锁则阻塞；当遇到 `monitorexit` 指令时锁计数器 `-1`，如果计数器为 0 则释放锁。
+| 底层是 CAS 乐观锁，依赖 `AbstractQueuedSynchronizer` 类，把所有的请求线程构成一个 CLH 队列。而对该队列的操作均通过 Lock-Free（CAS）操作。
+|===
+
+Lock 有比 `synchronized` 更精确的线程语义和更好的性能,而且不强制性的要求一定要获得锁.`synchronized` 会自动释放锁,而 Lock 一定要求程序员手工释放,并且最好在 `finally` 块中释放(这是释放外部资源的最好的地方).
 
 [[guide-thread-12]]
 == volatile 关键字？
@@ -331,7 +385,9 @@ https://study.jcohy.com/java/htmlsingle/index.html#java-juc-volatile[Volatile]
 == 你是如何调用 wait() 方法的？使用 if 块还是循环？为什么？
 
 
-`wait()` 方法应该在循环调用,因为当线程获取到 CPU 开始执行的时候,其他条件可能还没有满足,所以在处理前,循环检测条件是否满足会更好.下面是一段标准的使用 wait 和 notify 方法的代码:
+`wait()` 方法应该在循环调用，因为当线程获取到 CPU 开始执行的时候，其他条件可能还没有满足，所以在处理前，循环检测条件是否满足会更好。
+
+下面是一段标准的使用 wait 和 notify 方法的代码:
 
 [source,java]
 ----
@@ -415,11 +471,6 @@ Busy spin 是一种在不释放 CPU 的基础上等待事件的技术.它经常�
 == Swing 是线程安全的？
 
 不是,Swing 不是线程安全的.你不能通过任何线程来更新 Swing 组件,如 `JTable`、`JList` 或 `JPanel`,事实上,它们只能通过 GUI 或 AWT 线程来更新.这就是为什么 Swing 提供 `invokeAndWait()` 和 `invokeLater()` 方法来获取其他线程的 GUI 更新请求. 这些方法将更新请求放入 AWT 的线程队列中,可以一直等待,也可以通过异步更新直接返回结果.
-
-[[guide-thread-22]]
-== 用 wait-notify 写一段代码来解决生产者-消费者问题？
-
-记住在同步块中调用 `wait()` 和 `notify()` 方法,如果阻塞,通过循环来测试等待条件.
 
 [[guide-thread-23]]
 == 用 Java 写一个线程安全的单例模式(Singleton)？
@@ -522,7 +573,6 @@ Busy spin 是一种在不释放 CPU 的基础上等待事件的技术.它经常�
 [[guide-thread-39]]
 == Java 中 interrupted 和 isInterruptedd 方法的区别
 
-
 `interrupted` 是静态方法,isInterruptedd 是一个普通方法
 
 如果当前线程被中断(没有抛出中断异常,否则中断状态就会被清除),你调用 interrupted 方法,第一次会返回 `true`.然后,当前线程的中断状态被方法内部清除了.第二次调用时就会返回 `false`.如果你刚开始一直调用 `isInterrupted`,则会一直返回 `true`,
@@ -551,10 +601,132 @@ Java1.5 加入了并发集合像 `ConcurrentHashMap`,不仅提供线程安全还
 
 可以用线程类的 `join()` 方法.具体操作是在 T3 的 run 方法中调用 `t2.join()`,让 t2 执行完再执行 t3;T2 的 run 方法中调用 `t1.join()`,让 t1 执行完再执行 t2.这样就按 T1,T2,T3 的顺序执行了
 
+[source,java]
+----
+public class SequentialExecutionWithJoin {
+    public static void main(String[] args) {
+        Thread thread1 = new Thread(new Worker(), "Thread 1");
+        Thread thread2 = new Thread(new Worker(), "Thread 2");
+        Thread thread3 = new Thread(new Worker(), "Thread 3");
+
+        try {
+            // 启动第一个线程
+            thread1.start();
+            thread1.join(); // 等待第一个线程执行完毕
+
+            // 启动第二个线程
+            thread2.start();
+            thread2.join(); // 等待第二个线程执行完毕
+
+            // 启动第三个线程
+            thread3.start();
+            thread3.join(); // 等待第三个线程执行完毕
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static class Worker implements Runnable {
+        @Override
+        public void run() {
+            try {
+                String threadName = Thread.currentThread().getName();
+                System.out.println("Thread " + threadName + " is running");
+                // 执行线程的任务
+                Thread.sleep(1000);
+                System.out.println("Thread " + threadName + " has finished");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+----
+
+在上述示例中，我们创建了三个线程：thread1、thread2 和 thread3。这三个线程都执行相同的任务，即打印出线程的名称并休眠 1 秒。为了实现顺序执行，我们使用了 `join()` 方法来确保一个线程执行完毕后再启动下一个线程。
+
+首先，我们启动 thread1 并调用其 `join()` 方法，使得主线程等待 thread1 执行完毕。然后，我们启动 thread2 并等待其执行完毕。最后，我们启动 thread3 并等待其执行完毕。通过这样的方式，我们可以确保这三个线程按照顺序依次执行。
+
+除了使用 `join()` 方法以外，还可以使用 `Lock` 和 `Condition` 来实现三个线程的顺序执行。下面是一个使用 `Lock` 和 `Condition` 实现三个线程顺序执行的示例：
+
+[source,java]
+----
+public class SequentialExecutionWithLock {
+
+    public static void main(String[] args) {
+        Lock lock = new ReentrantLock();
+        Condition condition1 = lock.newCondition();
+        Condition condition2 = lock.newCondition();
+        Condition condition3 = lock.newCondition();
+
+        Thread thread1 = new Thread(new Worker(lock, condition1, condition2), "Thread 1");
+        Thread thread2 = new Thread(new Worker(lock, condition2, condition3), "Thread 2");
+        Thread thread3 = new Thread(new Worker(lock, condition3, condition1), "Thread 3");
+
+        try {
+            // 启动所有线程
+            thread1.start();
+            thread2.start();
+            thread3.start();
+            // 唤醒第一个线程
+            lock.lock();
+            condition1.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    static class Worker implements Runnable {
+        private final Lock lock;
+        private final Condition currentCondition;
+        private final Condition nextCondition;
+
+        public Worker(Lock lock, Condition currentCondition, Condition nextCondition) {
+            this.lock = lock;
+            this.currentCondition = currentCondition;
+            this.nextCondition = nextCondition;
+        }
+
+        @Override
+        public void run() {
+            try {
+                String threadName = Thread.currentThread().getName();
+                lock.lock();
+                try {
+                    // 等待条件满足
+                    currentCondition.await();
+                    System.out.println("Thread " + threadName + " is running");
+                    // 执行线程的任务
+                    Thread.sleep(1000);
+                    System.out.println("Thread " + threadName + " has finished");
+                    // 唤醒下一个线程
+                    nextCondition.signal();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+}
+----
+
+在上述示例中，我们使用 `ReentrantLock` 和 `Condition` 来实现线程的等待和唤醒。我们创建了一个 `Lock` 对象和三个 `Condition` 对象，分别用于对三个线程进行同步操作。
+
+每个线程在 `run()` 方法中，首先需要获得锁，然后调用当前 Condition 对象的 `await()` 方法等待条件满足。当条件满足时，线程执行任务，然后唤醒下一个线程，再释放锁。
+
+在 `main()` 方法中，我们创建并启动了三个线程，并在启动后唤醒第一个线程。接下来，线程之间通过 `wait()` 和 `signal()` 方法进行协作，实现顺序执行。
+
+无论是使用 `join()` 方法还是 `Lock` 和 `Condition`，都可以实现多个线程的顺序执行。具体使用哪种方式取决于你的需求和偏好。
+
+
 [[guide-thread-44]]
 == 如何写代码来解决生产者消费者问题？
 
 在现实中你解决的许多线程问题都属于生产者消费者模型,就是一个线程生产任务供其它线程进行消费,你必须知道怎么进行线程间通信来解决这个问题.比较低级的办法是用 wait 和 notify 来解决这个问题,比较赞的办法是用 `Semaphore` 或者 `BlockingQueue` 来实现生产者消费者模型.
+
+具体代码可查看：https://study.jcohy.com/html5/java.html#java-juc-sample1[wait-notify]
 
 [[guide-thread-45]]
 == 如何避免死锁
@@ -576,18 +748,14 @@ Java1.5 加入了并发集合像 `ConcurrentHashMap`,不仅提供线程安全还
 [[guide-thread-47]]
 == 怎么检测一个线程是否拥有锁
 
-在 `java.lang.Thread` 中有一个方法叫 `holdsLock`,当且仅当当前线程拥有某个具体对象的锁时它返回 true.
-
-[[guide-thread-49]]
-== Java 中 synchronized 和 ReentrantLock 有什么不同
-
-Java 在过去很长一段时间只能通过 synchronized 关键字来实现互斥,它有一些缺点.比如你不能扩展锁之外的方法或者块边界,尝试获取锁时不能中途取消等.Java 5 通过 Lock 接口提供了更复杂的控制来解决这些问题.
-`ReentrantLock` 类实现了 Lock,它拥有与 `synchronized` 相同的并发性和内存语义且它还具有可扩展性.
+在 `java.lang.Thread` 中有一个方法叫 `holdsLock`,当且仅当当前线程拥有某个具体对象的锁时它返回 `true`.
 
 [[guide-thread-50]]
 == Java 中 Semaphore 是什么
 
-JUC 下的一种新的同步类,它是一个计数信号.从概念上讲,Semaphore 信号量维护了一个许可集合.如有必要,在许可可用前会阻塞每一个 `acquire`,然后再获取该许可.每个 release 添加一个许可,从而可能释放一个正在阻塞的获取者.但是,不使用实际的许可对象,Semaphore 只对可用许可的号码进行计数,并采取相应的行动.信号量常常用于多线程的代码中,比如数据库连接池.
+JUC 下的一种新的同步类,它是一个计数信号.从概念上讲,Semaphore 信号量维护了一个许可集合.如有必要,在许可可用前会阻塞每一个 `acquire`,然后再获取该许可.
+每个 release 添加一个许可,从而可能释放一个正在阻塞的获取者.但是,不使用实际的许可对象,Semaphore 只对可用许可的号码进行计数,并采取相应的行动.
+信号量常常用于多线程的代码中,比如数据库连接池.
 
 [[guide-thread-51]]
 == 如果你提交任务时,线程池队列已满.会发会生什么？
@@ -645,7 +813,7 @@ volatile 变量和 `atomic` 变量看起来很像,但功能却不一样.volatile
 [[guide-thread-61]]
 == 如何强制启动一个线程？
 
-这个问题就像是如何强制进行 Java 垃圾回收,目前还没有觉得方法,虽然你可以使用 System.gc ()来进行垃圾回收,但是不保证能成功.在 Java 里面没有办法强制启动一个线程,它是被线程调度器控制着且 Java 没有公布相关的 API.
+这个问题就像是如何强制进行 Java 垃圾回收,目前还没有觉得方法,虽然你可以使用 `System.gc()` 来进行垃圾回收,但是不保证能成功.在 Java 里面没有办法强制启动一个线程,它是被线程调度器控制着且 Java 没有公布相关的 API.
 
 [[guide-thread-62]]
 == Java 中的 fork join 框架是什么？
@@ -685,9 +853,9 @@ public synchronized void test2() {
 }
 ----
 
-在上面代码段中,执行 test 方法需要获得当前对象作为监视器的对象锁,但方法中又调用了 test2 的同步方法.
+在上面代码段中,执行 `test` 方法需要获得当前对象作为监视器的对象锁,但方法中又调用了 `test2` 的同步方法.
 
-如果锁是具有可重入性的话,那么该线程在调用 test2 时并不需要再次获得当前对象的锁,可以直接进入 test2 方法进行操作.
+如果锁是具有可重入性的话,那么该线程在调用 `test2` 时并不需要再次获得当前对象的锁,可以直接进入 `test2` 方法进行操作.
 
 如果锁是不具有可重入性的话,那么该线程在调用 `test2` 前会等待当前对象锁的释放,实际上该对象锁已被当前线程所持有,不可能再次获得.
 
@@ -712,14 +880,13 @@ public synchronized void test2() {
 [[guide-thread-64]]
 == 同步方法和同步代码块
 
-
 同步方法默认用 this 或者当前类 class 对象作为锁;
 同步代码块可以选择以什么来加锁,比同步方法要更细颗粒度,我们可以选择只同步会发生同步问题的部分代码而不是整个方法.
 
 [[guide-thread-65]]
 == JMM(Java 内存模型)
 
-JMM(Java内存模型 Java Memory Model,简称 JMM)本身是一种抽象的概念并不真实存在,它描述的是一组规则或规范,通过这组规范定义了程序中各个变量(包括实例字段,静态字段和构成数组对象的元素)的访问方式.
+JMM(Java 内存模型 Java Memory Model,简称 JMM)本身是一种抽象的概念并不真实存在,它描述的是一组规则或规范,通过这组规范定义了程序中各个变量(包括实例字段,静态字段和构成数组对象的元素)的访问方式.
 
 JMM 关于同步的规定:
 

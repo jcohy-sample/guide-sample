@@ -1875,7 +1875,7 @@ Java 世界中实现模拟替身的第三方工具非常多,包括 `EasyMock`、
 
 
 [[guide-ee-50]]
-== SpringMVC与Struts2区别
+== SpringMVC 与 Struts2 区别
 
 . Spring MVC 的入口是 Servlet, 而 Struts2 是 Filter
 . Spring MVC 会稍微比 Struts2 快些. Spring MVC 是基于方法设计, 而 Sturts2 是基于类, 每次发一次请求都会实例一个 Action.

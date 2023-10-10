@@ -27,7 +27,6 @@ import com.jcohy.sample.java.juc.Account;
  */
 public class Test {
     public static void main(String[] args) throws Exception {
-		ConcurrentHashMap
         new Test().setA();
     }
     synchronized void setA() throws Exception{

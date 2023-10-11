@@ -1,7 +1,7 @@
-[[guide-socket]]
-= java socket
+[[java-socket]]
+= Java socket
 
-[[guide-socket-1]]
+[[java-socket-1]]
 == 用 Java 的套接字编程实现一个多线程的回显(echo)服务器.
 
 [source,java]

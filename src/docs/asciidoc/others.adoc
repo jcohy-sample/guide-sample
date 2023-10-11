@@ -1,14 +1,14 @@
-[[guide-other]]
+[[other]]
 = Other
 
-[[guide-other-1]]
+[[other-1]]
 == 开源软件有哪些
 
 Eclipse、Linux及其Linux下的大多数软件、Git等.
 
 Apache下的众多软件: Lucene、Velocity、Maven、高性能Java网络框架MINA、版本控制系统SVN、应用服务器Tomcat、Http服务器Apache、MVC框架Struts、持久层框架iBATIS、Apache SPARK、ActiveMQ
 
-[[guide-other-2]]
+[[other-2]]
 == 开源协议
 
 * MIT: 相对宽松.适用: JQuery

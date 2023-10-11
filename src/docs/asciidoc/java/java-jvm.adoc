@@ -1,10 +1,10 @@
-[[guide-jvm]]
-= java JVM
+[[java-jvm]]
+= Java JVM
 
-[[guide-jvm-17]]
+[[java-jvm-17]]
 == JVM 内存结构
 
-image::{oss-images}/jvm.png[]
+image::{oss-images}/JVM.png[]
 
 java 虚拟机主要分为以下几个区:
 
@@ -33,7 +33,7 @@ OOM 情况的区域。
 持久代 Java8 消失, 取代的称为元空间(本地堆内存的一部分)
 ====
 
-[[guide-jvm-1]]
+[[java-jvm-1]]
 == 解释内存中的栈(stack)、堆(heap)和方法区(method area)的用法.
 
 通常我们定义一个基本数据类型的变量，一个对象的引用，还有就是函数调用的现场保存都使用 JVM 中的栈空间。
@@ -77,7 +77,7 @@ public class TestJava {
 }
 ----
 
-[[guide-jvm-2]]
+[[java-jvm-2]]
 == Java 类加载过程？
 
 JVM 中类的装载是由类加载器(ClassLoader)和它的子类来实现的,Java 中的类加载器是一个重要的 Java 运行时系统组件,它负责在运行时查找和装入类文件中的类.由于 Java 的跨平台性,经过编译的 Java 源程序并不是一个可执行程序,而是一个或多个类文件.
@@ -119,7 +119,7 @@ Java 类加载需要经历一下几个过程：
 . 初始化: 初始化时类加载的最后一步，前面的类加载过程，除了在加载阶段用户应用程序可以通过自定义类加载器参与之外，
 其余动作完全由虚拟机主导和控制。到了初始化阶段，才真正开始执行类中定义的Java 程序代码。
 
-[[guide-jvm-13]]
+[[java-jvm-13]]
 == 内存分配以及Minor GC 和 Major GC（full GC）
 
 * 栈区：栈分为 java 虚拟机栈和本地方法栈
@@ -147,7 +147,7 @@ ext:虚拟机为每个对象定义一个年龄计数器,如果对象在 Eden 区
 如果允许,继续查看老年代最大可用连续空间是否大于历次晋升到老年代对象的平均大小,如果大于则尝试 MinorGC,尽管这次 MinorGC 是有风险的.如果小于,或者 HandlerPromotionFailure 设置不允许,则要改为 FullGC.
 * 新生代的回收称为 MinorGC,对老年代的回收成为 MajorGC 又名 FullGC
 
-[[guide-jvm-3]]
+[[java-jvm-3]]
 == Java 中会存在内存泄漏吗,请简单描述.
 
 内存泄露的定义: 当某些对象不再被应用程序所使用,但是由于仍然被引用而导致垃圾收集器不能释放.
@@ -195,7 +195,7 @@ public class MyStack<T> {
 因为栈内部维护着对这些对象的过期引用(obsolete reference).在支持垃圾回收的语言中,内存泄露是很隐蔽的,这种内存泄露其实就是无意识的对象保持.如果一个对象引用被无意识的保留起来了,那么垃圾回收器不会处理这个对象,也不会处理该对象引用的其他对象,
 即使这样的对象只有少数几个,也可能会导致很多的对象被排除在垃圾回收之外,从而对性能造成重大影响,极端情况下会引发 Disk Paging(物理内存与硬盘的虚拟内存交换数据),甚至造成 `OutOfMemoryError`.
 
-[[guide-jvm-4]]
+[[java-jvm-4]]
 == GC 是什么？为什么要有 GC？
 
 GC 是垃圾收集的意思,内存处理是编程人员容易出现问题的地方,忘记或者错误的内存回收会导致程序或系统的不稳定甚至崩溃,Java 提供的 GC 功能可以自动监测对象是否超过作用域从而达到自动回收内存的目的,Java语言没有提供释放已分配内存的显示操作方法.
@@ -225,19 +225,19 @@ Java 程序员不用担心内存管理,因为垃圾收集器会自动进行管�
 * -XX:InitialTenuringThreshold / -XX:MaxTenuringThreshold: 设置老年代阀值的初始值和最大值
 * -XX:TargetSurvivorRatio: 设置幸存区的目标使用率
 
-[[guide-jvm-6]]
+[[java-jvm-6]]
 == 主动 GC
 
 调用 `system.gc()` `Runtime.getRuntime.gc()`
 
-[[guide-jvm-5]]
+[[java-jvm-5]]
 == 对哪些区域回收
 
 Java 运行时数据区域: 程序计数器、JVM 栈、本地方法栈、方法区和堆.
 
 由于程序计数器、JVM 栈、本地方法栈 3 个区域随线程而生随线程而灭,对这几个区域内存的回收和分配具有确定性.而方法区和堆则不一样,程序需要在运行时才知道创建哪些对象,对这部分内存的分配是动态的,GC 关注的也就是这部分内存.
 
-[[guide-jvm-15]]
+[[java-jvm-15]]
 == 方法区的回收
 
 方法区通常会与永久代划等号,实际上二者并不等价,只不过是 HotSpot 虚拟机设计者用永久代实现方法区,并将 GC 分代扩展至方法区.
@@ -251,7 +251,7 @@ Java 运行时数据区域: 程序计数器、JVM 栈、本地方法栈、方法
 
 当然,这也仅仅是判定,不代表立即卸载该类.
 
-[[guide-jvm-39]]
+[[java-jvm-39]]
 == JVM 垃圾回收如何确定垃圾,是否知道什么是 GC Roots?
 
 . 引用计数法
@@ -272,7 +272,7 @@ Java 运行时数据区域: 程序计数器、JVM 栈、本地方法栈、方法
 常量池引用的对象、本地方法栈 JNI 引用的对象。
 
 
-[[guide-jvm-40]]
+[[java-jvm-40]]
 == 那些对象可以作为 GC Roots
 
 * 虚拟机栈(栈帧中的局部变量区)中引用的对象
@@ -280,7 +280,7 @@ Java 运行时数据区域: 程序计数器、JVM 栈、本地方法栈、方法
 * 方法区中常量引用的对象
 * 本地方法栈中JNI(native方法)引用的对象
 
-[[guide-jvm-41]]
+[[java-jvm-41]]
 == 强引用,软引用,弱引用,虚引用
 
 === 强引用
@@ -322,7 +322,7 @@ java技术允许使用 `finalize()` 方法在垃圾收集器将对象从内存�
 
 image::{oss-images}/guide-13.jpg[]
 
-[[guide-jvm-9]]
+[[java-jvm-9]]
 == 对象的自我救赎
 
 即使在可达性算法中判定为不可达时,也并非一定被回收.对象存在自我救赎的可能.要真正宣告对象的死亡,需要经历 2 次标记的过程.如果对象经过可达性分析法发现不可达时,对象将被第一次标记被进行筛选,筛选的条件是此对象是否有必要执行 `finalize` 方法.
@@ -331,7 +331,7 @@ image::{oss-images}/guide-13.jpg[]
 如果对象被判定为需要执行 `finalize` 方法,该对象将被放置在一个叫做 F-Queue 的队列中,JVM 会建立一个低优先级的线程执行 `finalize` 方法,如果对象想要完成自我救赎需要在 `finalize` 方法中与引用链上的对象关联,比如把自己也就是 this 赋值给某个类变量.
 当 GC 第二次对 F-Queue 中对象标记时,该对象将被移出“即将回收”的集合,完成自我救赎.简言之,`finalize` 方法是对象逃脱死亡命运的最后机会,并且任何对象的 finalize 方法只会被 JVM 调用一次.
 
-[[guide-jvm-10]]
+[[java-jvm-10]]
 == 垃圾回收算法
 
 采用分区分代回收思想：
@@ -351,7 +351,7 @@ HotSpot 虚拟机默认 Eden 区 Survivor 区 8:1.每次使用 Eden 和其中一
 * 分代收集算法:将堆内存划分为新生代,老年代,根据新生代老年代的特点选取不同的收集算法.因为新生代对象大多朝生夕死,而老年代对象存活率高,没有额外空间进行分配担保,通常对新生代执行复制算法,老年代执行 Mark-Sweep 算法或 Mark-Compact 算法.
 ** 新生代对象存活周期短,需要大量回收对象,需要复制的少,执行 copy 算法;老年代对象存活周期相对长,回收少量对象,执行 mark-compact 算法.新生代划分:较大的 eden 区 和 2 个 survivor 区
 
-[[guide-jvm-11]]
+[[java-jvm-11]]
 == 垃圾收集器
 
 * Serial: 串行垃圾回收器,他为单线程环境设计且只使用一个线程进行垃圾回收,会暂停所有用户线程,所以不适用于服务器环境
@@ -363,7 +363,7 @@ HotSpot 虚拟机默认 Eden 区 Survivor 区 8:1.每次使用 Eden 和其中一
 通常来说,新生代老年代使用不同的垃圾收集器.新生代的垃圾收集器有 `Serial`(单线程)、`ParNew`(Serial 的多线程版本)、`ParallelScavenge`(吞吐量优先的垃圾收集器),老年代有 `SerialOld`(单线程老年代)、`ParallelOld`(与 `ParallelScavenge` 搭配的多线程执行标记整理算法的老年代收集器)、CMS(标记清除算法,容易产生内存碎片,可以开启内存整理的参数),以及当前最先进的垃圾收集器G1,G1通常面向服务器端的垃圾收集器,
 在我自己的 Java 应用程序中通过 `-XX:+PrintGCDetails`,发现自己的垃圾收集器是使用了 `ParallelScavenge+ParallelOld` 的组合.
 
-[[guide-jvm-14]]
+[[java-jvm-14]]
 == 关于 GC 的虚拟机参数
 
 GC 相关
@@ -393,7 +393,7 @@ GC 相关
 * -XX:+PrintGC 输出GC日志
 * -XX:+PrintGCDetails 输出GC的详细日志
 
-[[guide-jvm-16]]
+[[java-jvm-16]]
 == JVM 工具
 
 命令行
@@ -411,34 +411,34 @@ GC 相关
 . JConsole(Java Monitoring and Management Console):Java 监视与管理控制台
 . VisualVM(All-in-one Java Troubleshooting Tool):多合一故障处理工具
 
-[[guide-jvm-20]]
+[[java-jvm-20]]
 == 64 位 JVM 中,int 的长度是多大？
 
 Java 中,int 类型变量的长度是一个固定值,与平台无关,都是 32 位.意思就是说,在 32 位 和 64 位 的 Java 虚拟机中,int 类型的长度是相同的.
 
-[[guide-jvm-21]]
+[[java-jvm-21]]
 == Serial 与 Parallel GC 之间的不同之处？
 
 Serial 与 Parallel 在 GC 执行的时候都会引起 stop-the-world .它们之间主要不同 serial 收集器是默认的复制收集器,执行 GC 的时候只有一个线程,而 parallel 收集器使用多个 GC 线程来执行.
 
-[[guide-jvm-24]]
+[[java-jvm-24]]
 == JVM 选项 -XX:+UseCompressedOops 有什么作用？为什么要使用？
 
 当你将你的应用从 32 位的 JVM 迁移到 64 位的 JVM 时,由于对象的指针从 32 位增加到了 64 位,因此堆内存会突然增加,差不多要翻倍.这也会对 CPU 缓存(容量比内存小很多)的数据产生不利的影响.因为,迁移到 64 位的 JVM 主要动机在于可以指定最大堆大小,
 通过压缩 OOP 可以节省一定的内存.通过 -XX:+UseCompressedOops 选项,JVM 会使用 32 位的 OOP,而不是 64 位的 OOP.
 
-[[guide-jvm-25]]
+[[java-jvm-25]]
 == 怎样通过 Java 程序来判断 JVM 是 32 位 还是 64 位？
 
 你可以检查某些系统属性如 `sun.arch.data.model` 或 `os.arch` 来获取该信息.
 
-[[guide-jvm-26]]
+[[java-jvm-26]]
 == 32 位 JVM 和 64 位 JVM 的最大堆内存分别是多数？
 
 理论上说上 32 位的 JVM 堆内存可以到达 2^32,即 4GB,但实际上会比这个小很多.不同操作系统之间不同,如 Windows 系统大约 1.5 GB,Solaris 大约 3GB.64 位 JVM 允许指定最大的堆内存,理论上可以达到 2^64,这是一个非常大的数字,
 实际上你可以指定堆内存大小到 100GB.甚至有的 JVM,如 Azul,堆内存到 1000G 都是可能的.
 
-[[guide-jvm-27]]
+[[java-jvm-27]]
 == JRE、JDK、JVM 及 JIT 之间有什么不同？
 
 JRE 代表 Java 运行时(Java run-time),是运行 Java 应用所必须的.JDK 代表 Java 开发工具(Java development kit),是 Java 程序的开发工具,如 Java 编译器,它也包含 JRE.JVM 代表 Java 虚拟机(Java virtual machine),
@@ -446,12 +446,12 @@ JRE 代表 Java 运行时(Java run-time),是运行 Java 应用所必须的.JDK �
 
 image::{oss-images}/guide-12.jpg[]
 
-[[guide-jvm-30]]
+[[java-jvm-30]]
 == 怎么获取 Java 程序使用的内存？堆使用的百分比？
 
 可以通过 `java.lang.Runtime` 类中与内存相关方法来获取剩余的内存,总内存及最大堆内存.通过这些方法你也可以获取到堆使用的百分比及堆内存的剩余空间.`Runtime.freeMemory()` 方法返回剩余空间的字节数,`Runtime.totalMemory()` 方法总内存的字节数,`Runtime.maxMemory()` 返回最大内存的字节数.
 
-[[guide-jvm-32]]
+[[java-jvm-32]]
 == JVM 调优
 
 使用工具 `Jconsol`、`VisualVM`、`JProfiler` 等
@@ -503,7 +503,7 @@ CPU热点:检查系统哪些方法占用的大量 CPU 时间
 
 系统内存被占满
 
-[[guide-jvm-34]]
+[[java-jvm-34]]
 == 什么情况下会产生 StackOverflowError （栈溢出）和 OutOfMemoryError （堆溢出）？怎么排查？
 
 * java.lang.StackOverflowError
@@ -543,7 +543,7 @@ CPU热点:检查系统哪些方法占用的大量 CPU 时间
 . 检查程序,看是否存在死循环或不必要地重复创建大量对象,定位原因,修改程序和算法.
 . 通过虚拟机参数 `-Xms` 和 `-Xmx` 设置初始堆和最大堆的大小
 
-[[guide-jvm-35]]
+[[java-jvm-35]]
 == DirectMemory 直接内存
 
 直接内存并不是 Java 虚拟机规范定义的内存区域的一部分,但是这部分内存也被频繁使用,而且也可能导致 OOM 异常的出现.
@@ -551,7 +551,7 @@ CPU热点:检查系统哪些方法占用的大量 CPU 时间
 JDK1.4 引入了 NIO,这是一种基于通道和缓冲区的非阻塞 IO 模式,它可以使用 Native 函数库分配直接堆外内存,然后通过一个存储在 Java 堆中的 `DirectByteBuffer` 对象作为这块内存的引用进行操作,
 使得在某些场合显著提高性能,因为它避免了在 Java 堆和本地堆之间来回复制数据.
 
-[[guide-jvm-37]]
+[[java-jvm-37]]
 == IO 模型
 
 

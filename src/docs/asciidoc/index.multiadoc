@@ -13,28 +13,20 @@ https://www.jcohy.com[*https://www.jcohy.com/projects*]
 
 [horizontal]
 
-<<java-base#guide-java,Java 基础面试>> :: Java 基础面试.
+<<java/index.adoc#java,Java 基础面试>> :: 包含 Java 基础面试，集合，并发编程，JVM，反射，线程等。。
 
-<<java-collection#guide-collection,Java 集合>> :: Java 集合.
+<<web/index.adoc#web,Java Web>> :: 包含 JSP，JDBC，ORM，Servlet，Web Service，XML ，安全以及优化等等.
 
-<<java-reflect#guide-reflect,Java 反射>> :: Java 反射.
+<<framework/index.adoc#java-framework,Java 框架>> :: 包含 Spring，Spring Boot，Mybatis，Nacos，Feign.
 
-<<java-stream#guide-stream,Java Stream>> :: Java Stream.
+<<sql/index.adoc#sql,SQL>> :: 包含 Redis ，Mysql.
 
-<<java-thread#guide-thread,Java 线程>> :: Java 线程.
+<<distributed/index.adoc#distributed,分布式技术>> :: 包含 消息队列（RabbitMQ），Zookeeper，ElasticSearch，Dubbo，Nginx 等.
 
-<<java-jvm#guide-jvm,Java JVM>> :: Java JVM.
+<<algorithm#algorithm,算法>> :: 算法.
 
-<<java-javaweb#guide-web,Java Web>> :: Java Web.
+<<network#network,计算机网络>> :: 计算机网络.
 
-<<java-javaee#guide-ee,Java EE>> :: Java EE.
+<<os#os,操作系统>> :: 操作系统.
 
-<<socket#guide-socket,Java Socket>> :: Java Socket.
-
-<<network#guide-network,计算机网络>> :: 计算机网络.
-
-<<os#guide-os,操作系统>> :: 操作系统.
-
-<<sql#guide-sql,Sql>> :: Sql.
-
-<<others#guide-other,Other>> :: Other.
+<<others#other,Other>> :: Other.

@@ -1,7 +1,7 @@
 [[java-juc]]
 = Java 并发
 
-[[guide-juc-1]]
+[[java-juc-1]]
 == 同步和异步，阻塞和非阻塞
 
 * 同步：调用者要一直等待调用结果的通知后才能进行后续的执行，现在就要，我可以等，等处结果为止
@@ -12,7 +12,7 @@
 同步，异步讨论的对象一般是被调用者（服务提供者），重点在于获得调用结果的消息的通知方式上。
 阻塞，非阻塞讨论的对象一般是调用者（服务请求者），重点在于等消息时候的行为，调用者是否能干其他事。
 
-[[guide-juc-2]]
+[[java-juc-2]]
 == 公平锁/非公平锁/可重入锁/独占锁/共享锁自旋锁
 
 === 公平锁/非公平锁
@@ -69,18 +69,18 @@ public synchronized void test2() {
 
 读锁的共享锁可保证并发读是非常高效的,读写,写读,写写的过程是互斥的.
 
-[[guide-juc-3]]
+[[java-juc-3]]
 == 当一个线程进入一个对象的 synchronized 方法 A 之后,其它线程是否可进入此对象的 synchronized 方法  B？
 
 不能.其它线程只能访问该对象的非同步方法,同步方法则不能进入.因为非静态方法上的 `synchronized` 修饰符要求执行方法时要获得对象的锁,如果已经进入 A 方法说明对象锁已经被取走,那么试图进入 B 方法的线程就只能在等锁池(注意不是等待池哦)中等待对象的锁.
 
-[[guide-juc-4]]
+[[java-juc-4]]
 == synchronized 关键字的用法？
 
 `synchronized` 关键字可以将对象或者方法标记为同步,以实现对对象和方法的互斥访问,可以用 `synchronized(对象) { … }` 定义同步代码块，
 或者在声明方法时将 `synchronized` 作为方法的修饰符.在上面的例子中已经展示了 `synchronized` 关键字的用法.
 
-[[guide-juc-15]]
+[[java-juc-15]]
 == 简述 synchronized 和 java.util.concurrent.locks.Lock 的底层原理？
 
 === Synchronized 原理：
@@ -107,7 +107,7 @@ Lock 释放锁的过程：修改状态值，调整等待链表。
 
 Lock 大量使用 CAS+自旋。因此根据 CAS 特性，lock 建议使用在低锁冲突的情况下。
 
-[[guide-juc-5]]
+[[java-juc-5]]
 == 简述 synchronized 和 java.util.concurrent.locks.Lock 的异同？
 
 Lock 是 Java 5 以后引入的新的 API,和关键字 synchronized 相比主要相同点:Lock 能完成 synchronized 所实现的所有功能
@@ -171,17 +171,17 @@ ReentrantLock 提供了多样化的同步，比如有时间限制的同步，可
 Lock 有比 `synchronized` 更精确的线程语义和更好的性能,而且不强制性的要求一定要获得锁.`synchronized` 会自动释放锁,而 Lock 一定要求程序员手工释放,并且最好在 `finally` 块中释放(这是释放外部资源的最好的地方).
 
 
-[[guide-juc-6]]
+[[java-juc-6]]
 == volatile 关键字？
 
 https://study.jcohy.com/java/htmlsingle/index.html#java-juc-volatile[Volatile]
 
-[[guide-juc-7]]
+[[java-juc-7]]
 ==  volatile 变量和 atomic 变量有什么不同
 
 volatile 变量和 `atomic` 变量看起来很像,但功能却不一样.volatile 变量可以确保先行关系,即写操作会发生在后续的读操作之前, 但它并不能保证原子性.例如用 `volatile` 修饰 count 变量那么 `count++` 操作并不是原子性的.而 `AtomicInteger` 类提供的 atomic 方法可以让这种操作具有原子性如 `getAndIncrement()` 方法会原子性的进行增量操作把当前值加一,其它数据类型和引用变量也可以进行相似操作.
 
-[[guide-juc-8]]
+[[java-juc-8]]
 == JDK 提供的用于并发编程的同步器
 
 . `Semaphore` Java 并发库的 Semaphore 可以很轻松完成信号量控制,`Semaphore` 可以控制某个资源可被同时访问的个数,通过 `acquire()` 获取一个许可,如果没有就等待,而 `release()` 释放一个许可.
@@ -190,32 +190,32 @@ volatile 变量和 `atomic` 变量看起来很像,但功能却不一样.volatile
 
 详情可查看 https://study.jcohy.com/java/htmlsingle/index.html#java-juc[https://study.jcohy.com/java/htmlsingle/index.html#java-juc]
 
-[[guide-juc-9]]
+[[java-juc-9]]
 == Java 中 CyclicBarrier 和 CountDownLatch 有什么不同
 
 它们都是 JUC 下的类,`CyclicBarrier` 和 `CountDownLatch` 都可以用来让一组线程等待其它线程。
 区别在于 `CountdownLatch` 计数无法被重置.如果需要重置计数,请考虑使用 `CyclicBarrier`.
 
-[[guide-juc-10]]
+[[java-juc-10]]
 == Java 中 Semaphore 是什么
 
 JUC 下的一种新的同步类,它是一个计数信号.从概念上讲,Semaphore 信号量维护了一个许可集合.如有必要,在许可可用前会阻塞每一个 `acquire`,然后再获取该许可.
 每个 release 添加一个许可,从而可能释放一个正在阻塞的获取者.但是,不使用实际的许可对象,Semaphore 只对可用许可的号码进行计数,并采取相应的行动.
 信号量常常用于多线程的代码中,比如数据库连接池.
 
-[[guide-juc-11]]
+[[java-juc-11]]
 == Java 中的 ReadWriteLock 是什么？
 
 一般而言,读写锁是用来提升并发程序性能的锁分离技术的成果.Java 中的 ReadWriteLock 是 Java 5 中新增的一个接口,一个 ReadWriteLock 维护一对关联的锁,一个用于只读操作一个用于写.
 在没有写线程的情况下一个读锁可能会同时被多个读线程持有.写锁是独占的,你可以使用 JDK 中的 `ReentrantReadWriteLock` 来实现这个规则,它最多支持 65535 个写锁和 65535 个读锁.
 
-[[guide-juc-12]]
+[[java-juc-12]]
 == 什么是 FutureTask？
 
 在 Java 并发程序中 `FutureTask` 表示一个可以取消的异步运算.它有启动和取消运算、查询运算是否完成和取回运算结果等方法.只有当运算完成的时候结果才能取回,如果运算尚未完成 get 方法将会阻塞.
 一个 `FutureTask` 对象可以对调用了 `Callable` 和 `Runnable` 的对象进行包装,由于 `FutureTask` 也是调用了 `Runnable` 接口所以它可以提交给 `Executor` 来执行.
 
-[[guide-juc-13]]
+[[java-juc-13]]
 == Java 中的同步集合与并发集合有什么区别
 
 同步集合与并发集合都为多线程和并发提供了合适的线程安全的集合，不过并发集合的可扩展性更高。
@@ -223,7 +223,7 @@ JUC 下的一种新的同步类,它是一个计数信号.从概念上讲,Semapho
 
 Java1.5 加入了并发集合像 `ConcurrentHashMap`,不仅提供线程安全还用锁分离和内部分区等现代技术提高了可扩展性.它们大部分位于 JUC 包下.
 
-[[guide-juc-14]]
+[[java-juc-14]]
 == 常见线程安全的并发容器有哪些？
 
 CopyOnWriteArrayList、CopyOnWriteArraySet、ConcurrentHashMap
@@ -231,7 +231,7 @@ CopyOnWriteArrayList、CopyOnWriteArraySet 采用写时复制实现线程安全�
 
 ConcurrentHashMap 采用分段锁的方式实现线程安全
 
-[[guide-juc-16]]
+[[java-juc-16]]
 == Atomic 原子类了解多少？原理是什么？
 
 Java 的原子类都存放在并发包 java.util.concurrent.atomic 下：
@@ -262,7 +262,7 @@ CAS 的原理，是拿期望值和原本的值作比较，如果相同，则更�
 是个本地方法，这个方法是用来拿 "原值" 的内存地址，返回值是 valueOffset；另外，value 是一个 volatile 变量，
 因此 JVM 总是可以保证任意时刻的任何线程总能拿到该变量的最新值。
 
-[[guide-juc-17]]
+[[java-juc-17]]
 == 了解 ConcurrentHashMap 吗?为什么性能比HashTable 高，说下原理
 
 ConcurrentHashMap 是线程安全的 Map 容器，JDK8 之前，ConcurrentHashMap 使用锁分段技术，将数据分成一段段
@@ -272,7 +272,7 @@ ConcurrentHashMap 是线程安全的 Map 容器，JDK8 之前，ConcurrentHashMa
 hashtable 类基本上所有的方法都是采用 synchronized 进行线程安全控制，高并发情况下效率就降低 ，
 ConcurrentHashMap 是采用了分段锁的思想提高性能，锁粒度更细化
 
-[[guide-juc-18]]
+[[java-juc-18]]
 == synchronized 和 volatile 有什么区别？
 
 . volatile 本质是告诉 JVM 当前变量在寄存器中的值是不确定的，需要从主存中读取，synchronized 则是锁定当前变

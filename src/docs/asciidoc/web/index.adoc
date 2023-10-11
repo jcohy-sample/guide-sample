@@ -1,6 +1,20 @@
 [[web]]
 = Web
 
-include::java-javaweb.adoc[leveloffset=+1]
+include::terms.adoc[leveloffset=+1]
 
-include::java-javaee.adoc[leveloffset=+1]
+include::xml.adoc[leveloffset=+1]
+
+include::servlet.adoc[leveloffset=+1]
+
+include::jsp.adoc[leveloffset=+1]
+
+include::web-service.adoc[leveloffset=+1]
+
+include::orm.adoc[leveloffset=+1]
+
+include::jdbc.adoc[leveloffset=+1]
+
+include::security.adoc[leveloffset=+1]
+
+include::optimize.adoc[leveloffset=+1]

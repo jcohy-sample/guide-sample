@@ -1,0 +1,54 @@
+[[web-service]]
+= Web Service
+
+
+[[web-service-1]]
+== 什么是 Web Service(Web 服务)？
+
+从表面上看,Web Service 就是一个应用程序,它向外界暴露出一个能够通过 Web 进行调用的 API.这就是说,你能够用编程的方法透明的调用这个应用程序,不需
+要了解它的任何细节,跟你使用的编程语言也没有关系.例如可以创建一个提供天气预报的 Web Service,那么无论你用哪种编程语言开发的应用都可以通过调用它的 API 并
+传入城市信息来获得该城市的天气预报.之所以称之为 Web Service,是因为它基于 HTTP 协议传输数据,这使得运行在不同机器上的不同应用无须借助
+附加的、专门的第三方软件或硬件,就可相互交换数据或集成.
+
+补充:这里必须要提及的一个概念是 SOA(Service-Oriented Architecture,面向服务的架构),SOA 是一种思想,它将应用程序的不同功能单元通过中立的契约联系起来,独立于硬件平台、操作系统和编程语言,使得各种形式的功能单元能够更好的集成.显然,Web Service 是 SOA 的一种较好的解决方案,它更多的是一种标准,而不是一种具体的技术.
+
+[[web-service-2]]
+== 概念解释:SOAP、WSDL、UDDI.
+
+SOAP:简单对象访问协议(Simple Object Access Protocol),是Web Service中交换数据的一种协议规范.
+
+* WSDL:Web 服务描述语言(Web Service Description Language),它描述了 Web 服务的公共接口.这是一个基于 XML 的关于如何与 Web 服务通讯
+和使用的服务描述;也就是描述与目录中列出的 Web 服务进行交互时需要绑定的
+协议和信息格式.通常采用抽象语言描述该服务支持的操作和信息,使用的时候再将实际的网络协议和信息格式绑定给该服务.
+* UDDI:统一描述、发现和集成(Universal Description, Discovery and Integration),它是一个基于XML的跨平台的描述规范,可以使世界范
+围内的企业在互联网上发布自己所提供的服务.简单的说,UDDI 是访问各种 WSDL 的一个门面(可以参考设计模式中的门面模式).
+
+[TIP]
+====
+提示:关于 Web Service 的相关概念和知识可以在 W3CSchool 上找到相关的资料.
+====
+
+[[web-service-3]]
+== Java 规范中和 Web Service 相关的规范有哪些？
+
+Java 规范中和 Web Service 相关的有三个:
+
+* JAX-WS(JSR 224):这个规范是早期的基于 SOAP 的 Web Service 规范 JAX-RPC 的替代版本,它并不提供向下兼容性,因为 RPC 样式的 WSDL 以及相关的 API 已
+经在 Java EE5 中被移除了.WS-MetaData 是 JAX-WS 的依赖规范,提供了基于注解配置 Web Service 和 SOAP 消息的相关 API.
+* JAXM(JSR 67):定义了发送和接收消息所需的API,相当于Web Service的服务器端.
+* JAX-RS(JSR 311 & JSR 339 & JSR 370):是 Java 针对 REST(Representation State Transfer) 架构风格制定的一套 Web Service 规范.
+
+REST 是一种软件架构模式,是一种风格,它不像SOAP那样本身承载着一种消息协议, (两种风格的 Web Service 均采用了 HTTP 做传输协议,因为 HTTP 协议能穿越防火墙,Java 的远程方法调用(RMI)等是重量级协议,通常不能穿越防火墙),因此
+可以将 REST 视为基于 HTTP 协议的软件架构.REST 中最重要的两个概念是资源定位和资源操作,而 HTTP 协议恰好完整的提供了这两个点.HTTP 协议中的 URI 可以完成资源定位,而 GET、POST、OPTION、DELETE 方法可以完成资源操作
+。因此 REST 完全依赖 HTTP 协议就可以完成 Web Service,而不像 SOAP 协议那样只利用了 HTTP 的传输特性，定位和操作都是由 SOAP 协议自身完成的，也
+正是由于 SOAP 消息的存在使得基于 SOAP 的 Web Service 显得笨重而逐渐被淘汰.
+
+[[web-service-4]]
+== 介绍一下你了解的 Java 领域的 Web Service 框架.
+
+Java 领域的 Web Service 框架很多,包括 Axis2(Axis 的升级版本)、Jersey(RESTful 的 Web Service 框架)、CXF(XFire 的延续版本)、Hessian、Turmeric、JBoss SOA 等,其中绝大多数都是开源框架.
+
+[TIP]
+====
+提示:面试被问到这类问题的时候一定选择自己用过的最熟悉的作答,如果之前没有了解过就应该在面试前花一些时间了解其中的两个,并比较其优缺点,这样才能在面试时给出一个漂亮的答案.
+====

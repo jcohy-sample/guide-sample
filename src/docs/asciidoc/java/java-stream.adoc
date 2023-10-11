@@ -1,14 +1,14 @@
-[[guide-stream]]
-= java stream
+[[java-stream]]
+= Java stream
 
-[[guide-stream-1]]
+[[java-stream-1]]
 == Java 中如何实现序列化,有什么意义？
 
 序列化就是一种用来处理对象流的机制,所谓对象流也就是将对象的内容进行流化.可以对流化后的对象进行读写操作,也可将流化后的对象传输于网络之间.序列化是为了解决对象流读写操作时可能引发的问题(如果不进行序列化可能会存在数据乱序的问题).
 要实现序列化,需要让一个类实现 `Serializable` 接口,该接口是一个标识性接口,标注该类对象是可被序列化的,然后使用一个输出流来构造一个对象输出流并通过 `writeObject(Object)` 方法就可以将实现对象写出(即保存其状态);
 如果需要反序列化则可以用一个输入流建立对象输入流,然后通过 `readObject` 方法从流中读取对象.序列化除了能够实现对象的持久化之外,还能够用于对象的深度克隆.
 
-[[guide-stream-2]]
+[[java-stream-2]]
 == Java 中有几种类型的流？
 
 字节流和字符流.
@@ -70,7 +70,7 @@ public final class MyUtil {
 
 注意:上面用到 Java 7 的 TWR,使用 TWR 后可以不用在 finally 中释放外部资源,从而让代码更加优雅.
 
-[[guide-stream-3]]
+[[java-stream-3]]
 == 写一个方法,输入一个文件名和一个字符串,统计这个字符串在这个文件中出现的次数.
 
 [source,java]
@@ -111,7 +111,7 @@ public final class MyUtil {
 
 ----
 
-[[guide-stream-4]]
+[[java-stream-4]]
 == 如何用 Java 代码列出一个目录下所有的文件？
 
 如果只要求列出当前文件夹下的文件,代码如下所示:

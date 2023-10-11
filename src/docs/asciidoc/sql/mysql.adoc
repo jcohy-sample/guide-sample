@@ -1,7 +1,7 @@
-[[mysql]]
+[[sql-mysql]]
 = Mysql
 
-[[guide-sql-4]]
+[[sql-mysql-4]]
 == 数据库索引的实现
 
 
@@ -73,7 +73,7 @@ SQL Select 语句完整的执行顺序：
 
 == MySQL 的事务
 
-<<guide-web-7>>
+<<web-terms-3>>
 
 == 简述在 MySQL 数据库中 MyISAM 和 InnoDB 的区别
 
@@ -362,10 +362,10 @@ join 同理反向），同时尽量把牵涉到多表联合的查询拆分多个
 例如：`select * from admin where year(admin_time)>2014`
 优化为： `select * from admin where admin_time> '2014-01-01′`
 
-[[guide-sql-5]]
+[[sql-mysql-5]]
 == 案例1
 
-[[guide-sql-5-student-tbl]]
+[[sql-mysql-5-student-tbl]]
 .Student 学生表
 |===
 | 表字段                     | 说明
@@ -381,7 +381,7 @@ join 同理反向），同时尽量把牵涉到多表联合的查询拆分多个
 | Sbirth           | 生日
 |===
 
-[[guide-sql-5-course-tbl]]
+[[sql-mysql-5-course-tbl]]
 .Course 课程表
 |===
 | 表字段                     | 说明
@@ -393,7 +393,7 @@ join 同理反向），同时尽量把牵涉到多表联合的查询拆分多个
 | TID           | 教师ID
 |===
 
-[[guide-sql-5-sc-tbl]]
+[[sql-mysql-5-sc-tbl]]
 .SC 成绩表
 |===
 | 表字段                     | 说明
@@ -405,7 +405,7 @@ join 同理反向），同时尽量把牵涉到多表联合的查询拆分多个
 | score           | 分数
 |===
 
-[[guide-sql-5-teacher-tbl]]
+[[sql-mysql-5-teacher-tbl]]
 .Teacher 教师表
 |===
 | 表字段                     | 说明

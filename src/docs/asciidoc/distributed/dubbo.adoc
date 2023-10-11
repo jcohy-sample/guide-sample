@@ -1,4 +1,4 @@
-[[guide-dubbo]]
+[[dubbo]]
 = dubbo 基础面试
 
 == Dubbo 是什么？

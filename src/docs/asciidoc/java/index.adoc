@@ -1,4 +1,4 @@
-[[Java]]
+[[java]]
 = Java
 
 include::java-base.adoc[leveloffset=+1]

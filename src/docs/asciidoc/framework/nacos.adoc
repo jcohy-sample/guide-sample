@@ -1,0 +1,23 @@
+[[java-framework-nacos]]
+= Nacos
+
+[[java-framework-nacos-1]]
+== Nacos 作用以及注册中心的原理
+
+Nacos 英文全称 Dynamic Naming and Configuration Service，`Na` 为 naming/nameServer 即注册中心,`co` 为 configuration 即注册中心，service 是指该注册/配置中心都是以服务为核心。
+
+Nacos 注册中心分为 server 与 client，server 采用 Java 编写，为 client 提供注册发现服务与配置服务。
+而 client 可以用多语言实现，client 与微服务嵌套在一起，nacos 提供 sdk 和 openApi，如果没有 sdk 也可以根据 openApi 手动写
+服务注册与发现和配置拉取的逻辑。
+
+image::{oss-images}/nacos.png[]
+
+服务注册原理:
+
+服务注册方法：以 Java nacos client v1.0.1 为例子，服务注册的策略的是每 5 秒向 nacos server 发送一次心跳，心跳
+带上了服务名，服务 ip，服务端口等信息。同时 nacos server 也会向 client 主动发起健康检查，支持 tcp/http 检查。
+如果 15 秒内无心跳且健康检查失败则认为实例不健康，如果 30 秒内健康检查失败则剔除实例。
+
+image::{oss-images}/nacos2.png[]
+
+

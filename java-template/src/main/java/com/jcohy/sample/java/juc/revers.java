@@ -1,7 +1,5 @@
 package com.jcohy.sample.java.juc;
 
-import java.util.concurrent.Semaphore;
-
 /**
  * Copyright: Copyright (c) 2023 <a href="https://www.jcohy.com" target="_blank">jcohy.com</a>
  * <p> Description:
@@ -17,7 +15,7 @@ public class revers {
 	}
 
 	public static String reverse(String originStr) {
-		if(originStr == null || originStr.length() <= 1)
+		if (originStr == null || originStr.length() <= 1)
 			return originStr;
 		return reverse(originStr.substring(1)) + originStr.charAt(0);
 	}

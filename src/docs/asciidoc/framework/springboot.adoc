@@ -1,0 +1,58 @@
+[[web-springboot]]
+= Spring Boot
+
+== 谈谈怎么理解 SpringBoot 框架？
+
+Spring Boot 是 Spring 开源组织下的子项目，是 Spring 组件一站式解决方案，主要是简化了使用 Spring 的难度，
+简省了繁重的配置，提供了各种启动器，开发者能快速上手。
+
+SpringBoot = Auto Dependency Resolution（依赖解决） + Auto Configuration（自动配置） + Management Endpoint（端点管理） + Embedded Http Servers（嵌入式服务器）
+
+Spring Boot 的优点
+
+* 独立运行：Spring Boot 而且内嵌了各种 servlet 容器， Tomcat、 Jetty 等，现在不再需要打成 war 包部署到容器中， Spring Boot 只要打成一个可执行的 jar 包就能独立运行，所有的依赖包都在一个 jar 包内。
+* 简化配置：spring-boot-starter-web 启动器自动依赖其他组件，简少了 maven 的配置。除此之外，还提供了各种启动器，开发者能快速上手。
+* 自动配置：Spring Boot 能根据当前类路径下的类、jar 包来自动配置 bean，如添加一个 spring-boot-starter-web 启动器就能拥有 web 的功能，无需其他配置。
+* 无代码生成和 XML 配置： Spring Boot 配置过程中无代码生成，也无需 XML 配置文件就能完成所有配置工作，这一切都是借助于条件注解完成的，这也是 Spring4.x 的核心功能之一。
+* 应用监控：Spring Boot 提供一系列端点可以监控服务及应用，做健康检测。
+
+Spring Boot 缺点：
+
+* Spring Boot 虽然上手很容易，但如果你不了解其核心技术及流程，所以一旦遇到问题就很棘手，而且现在的解决方案也不是很多，需要一个完善的过程。
+
+== Spring Boot 的核心注解是哪个？它主要由哪几个注解组成的？
+
+启动类上面的注解是 `@SpringBootApplication`，它也是 Spring Boot 的核心注解，主要组合包含了以下 3 个注解：
+
+* @SpringBootConfiguration：组合了 @Configuration 注解，实现配置文件的功能。
+* @EnableAutoConfiguration：打开自动配置的功能，也可以关闭某个自动配置的选项，
+** 如关闭数据源自动配置功能： @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })。
+* @ComponentScan：Spring 组件扫描。
+
+== Spring Boot 自动配置原理是什么？
+
+https://study.jcohy.com/spring/index.html#springboot-base-config-auto[https://study.jcohy.com/spring/index.html#springboot-base-config-auto]
+
+== SpringBoot 和 SpringCloud 是什么关系
+
+Spring Boot 是 Spring 的一套快速配置脚手架，可以基于 Spring Boot 快速开发单个微服务，Spring Cloud 是一个基
+于 Spring Boot 实现的开发工具；Spring Boot 专注于快速、方便集成的单个微服务个体，Spring Cloud 关注全局的服
+务治理框架； Spring Boot 使用了默认大于配置的理念，很多集成方案已经帮你选择好了，能不配置就不配置， Spring
+Cloud 很大的一部分是基于 Spring Boot 来实现，必须基于 Spring Boot 开发。
+
+可以单独使用 Spring Boot 开发项目，但是 Spring Cloud 离不开 Spring Boot。
+
+== SpringCloud 都用过哪些组件？介绍一下作用
+
+经常用的组件：
+
+. Nacos--作为注册中心和配置中心，实现服务注册发现和服务健康监测及配置信息统一管理
+. Gateway--作为网关，作为分布式系统统一的出入口，进行服务路由，统一鉴权等
+. OpenFeign--作为远程调用的客户端，实现服务之间的远程调用
+. Sentinel--实现系统的熔断限流
+. Sleuth--实现服务的链路追踪
+
+
+
+
+

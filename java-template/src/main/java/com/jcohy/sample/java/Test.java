@@ -1,16 +1,9 @@
 package com.jcohy.sample.java;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Properties;
-
 import com.jcohy.sample.java.juc.Account;
 
 /**
  * 描述: .
- *
  * <p>
  * Copyright © 2023 <a href="https://www.jcohy.com" target= "_blank">https://www.jcohy.com</a>
  *
@@ -19,20 +12,21 @@ import com.jcohy.sample.java.juc.Account;
  * @since 1.0.0
  */
 public class Test {
-    public static void main(String[] args) throws Exception {
-        new Test().setA();
-    }
-    synchronized void setA() throws Exception{
-        System.out.println("A");
-        Thread.sleep(1000);
-        setB();
-    }
+	public static void main(String[] args) throws Exception {
+		new Test().setA();
+	}
 
-     void setB() throws Exception{
-         synchronized(Account.class) {
-             System.out.println("B");
-             Thread.sleep(1000);
-         }
+	synchronized void setA() throws Exception {
+		System.out.println("A");
+		Thread.sleep(1000);
+		setB();
+	}
 
-    }
+	void setB() throws Exception {
+		synchronized (Account.class) {
+			System.out.println("B");
+			Thread.sleep(1000);
+		}
+
+	}
 }

@@ -1,0 +1,32 @@
+[[java]]
+= 面试指南
+
+****
+作者网页:
+https://www.jcohy.com[*https://www.jcohy.com*]
+
+文档翻译网址:
+https://www.jcohy.com[*https://www.jcohy.com/projects*]
+
+我的学习笔记,记录学习过程中的笔记以及遇到的问题,以及我的一些经验总结.如果出现链接失效,或者想知道更多的内容等情况可以提交 https://github.com/jcohy/jcohy-issues/issues[Issues] 提醒我修改相关内容.
+****
+
+[horizontal]
+
+<<java/index.adoc#java,Java 基础面试>> :: 包含 Java 基础面试，集合，并发编程，JVM，反射，线程等。。
+
+<<web/index.adoc#web,Java Web>> :: 包含 JSP，JDBC，ORM，Servlet，Web Service，XML ，安全以及优化等等.
+
+<<framework/index.adoc#java-framework,Java 框架>> :: 包含 Spring，Spring Boot，Mybatis，Nacos，Feign.
+
+<<sql/index.adoc#sql,SQL>> :: 包含 Redis ，Mysql.
+
+<<distributed/index.adoc#distributed,分布式技术>> :: 包含 消息队列（RabbitMQ），Zookeeper，ElasticSearch，Dubbo，Nginx 等.
+
+<<algorithm#algorithm,算法>> :: 算法.
+
+<<network#network,计算机网络>> :: 计算机网络.
+
+<<os#os,操作系统>> :: 操作系统.
+
+<<others#other,Other>> :: Other.

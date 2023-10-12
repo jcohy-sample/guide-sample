@@ -1,7 +1,7 @@
-[[guide-reflect]]
-= java 反射
+[[java-reflect]]
+= Java 反射
 
-[[guide-reflect-1]]
+[[java-reflect-1]]
 == 获得一个类的类对象有哪些方式？
 
 
@@ -17,7 +17,7 @@
 +
 例如: `Class.forName("java.lang.String")`
 
-[[guide-reflect-2]]
+[[java-reflect-2]]
 == 如何通过反射创建对象？
 
 * 方法1:通过类对象调用 newInstance() 方法
@@ -28,7 +28,7 @@
 +
 例如: `String.class.getConstructor(String.class).newInstance("Hello");`
 
-[[guide-reflect-3]]
+[[java-reflect-3]]
 == 如何通过反射获取和设置对象私有字段的值？
 
 可以通过类对象的 `getDeclaredField()` 方法字段(Field)对象,然后再通过字段对象的 `setAccessible(true)` 将其设置为可以访问,接下来就可以通过 get/set 方法来获取/设置字段的值了.下面的代码实现了一个反射的工具类,其中的两个静态方法分别用于获取和设置私有字段的值,字段可以是基本类型也可以是对象类型且支持多级对象操作
@@ -112,7 +112,7 @@ public class ReflectionUtil {
 
 ----
 
-[[guide-reflect-4]]
+[[java-reflect-4]]
 == 如何通过反射调用对象的方法？
 
 请看下面的代码:

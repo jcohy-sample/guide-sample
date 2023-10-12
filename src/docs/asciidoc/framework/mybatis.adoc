@@ -1,0 +1,120 @@
+[[java-framework-mybatis]]
+= Mybatis
+
+[[java-framework-mybatis1]]
+== MyBatis 中使用 # 和 $ 书写占位符有什么区别？
+
+`\#` 将传入的数据都当成一个字符串,会对传入的数据自动加上引号; `\$` 将传入的数据直接显示生成在SQL中.注意:使用 `\$` 占位符可能会导致SQL注射攻击,能用 `#` 的地方就不要使用 `\$`,写order by子句的时候应该用 `\$` 而不是 `#`
+
+[[java-framework-mybatis2]]
+== 解释一下 MyBatis 中命名空间(namespace)的作用.
+
+在大型项目中,可能存在大量的 SQL 语句,这时候为每个SQL语句起一个唯一的标识(ID)就变得并不容易了.为了解决这个问题,在 MyBatis 中,可以为每个映射文件起一个唯一的命名空间 这样定义在这个映射文件中的每个SQL语句就成了定义在这个命名空间中的一个 ID.
+
+只要我们能够保证每个命名空间中这个 ID 是唯一的,即使在不同映射文件中的语句 ID 相同,也不会再产生冲突了.
+
+[[java-framework-mybatis3]]
+== MyBatis 中的动态 SQL 是什么意思？
+
+对于一些复杂的查询,我们可能会指定多个查询条件,但是这些条件可能存在也可能不存在,例如在 58 同城上面找房子,我们可能会指定面积、楼层和所在位置来查找房源,也可能会指定面积、价格、户型和所在位置来查找房源,此时就需要根据用户指定的条件动态生成SQL语句.如果不使用持久层框架我们可能需要自己拼装SQL语句,还好MyBatis提供了动态SQL的功能来解决这个问题.MyBatis中用于实现动态SQL的元素主要有:
+
+* if
+* choose / when / otherwise
+* trim
+* where
+* set
+* foreach
+
+下面是映射文件的片段.
+
+[source,html]
+----
+<select id="foo" parameterType="Blog" resultType="Blog">
+    select * from t_blog where 1 = 1
+    <if test="title != null">
+        and title = #{title}
+    </if>
+    <if test="content != null">
+        and content = #{content}
+    </if>
+    <if test="owner != null">
+        and owner = #{owner}
+    </if>
+</select>
+----
+
+当然也可以像下面这些书写.
+
+[source,html]
+----
+<select id="foo" parameterType="Blog" resultType="Blog">
+    select * from t_blog where 1 = 1
+    <choose>
+        <when test="title != null">
+            and title = #{title}
+        </when>
+        <when test="content != null">
+            and content = #{content}
+        </when>
+        <otherwise>
+            and owner = "owner1"
+        </otherwise>
+    </choose>
+</select>
+----
+
+再看看下面这个例子.
+
+[source,html]
+----
+<select id="bar" resultType="Blog">
+    select * from t_blog where id in
+    <foreach collection="array" index="index"
+             item="item" open="(" separator="," close=")">
+        #{item}
+    </foreach>
+</select>
+<p id="javaee-21">
+----
+
+[[java-framework-mybatis4]]
+== Mybatis 中一级缓存与二级缓存？
+
+MyBatis 的缓存分为一级缓存和 二级缓存。
+
+* 一级缓存是 SqlSession 级别的缓存，默认开启。
+* 二级缓存是 NameSpace 级别(Mapper)的缓存，多个 SqlSession 可以共享，使用时需要进行配置开启。
+
+缓存的查找顺序：二级缓存 => 一级缓存 => 数据库
+
+[[java-framework-mybatis5]]
+== MyBatis 如何获取自动生成的(主)键值?
+
+在 `<insert>` 标签中使用 `useGeneratedKeys` 和 `keyProperty` 两个属性来获取自动生成的主键值。
+
+示例:
+
+[source,xml]
+----
+<insert id="insertname" usegeneratedkeys="true" keyproperty="id">
+    insert into names (name) values (#{name})
+</insert>
+----
+
+[[java-framework-mybatis6]]
+== Mybatis 如何完成 MySQL 的批量操作,举例说明
+
+MyBatis 完成 MySQL 的批量操作主要是通过 `<foreach>` 标签来拼装相应的 SQL 语句.
+
+例如:
+
+[source,xml]
+----
+
+<insert id="insertBatch" >
+    insert into tbl_employee(last_name,email,gender,d_id) values
+    <foreach collection="emps" item="curr_emp" separator=",">
+        (#{curr_emp.lastName},#{curr_emp.email},#{curr_emp.gender},#{curr_emp.dept.id})
+    </foreach>
+</insert>
+----

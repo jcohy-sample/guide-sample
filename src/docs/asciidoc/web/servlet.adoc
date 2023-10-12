@@ -1,0 +1,472 @@
+[[web-servlet]]
+== Servlet
+
+[[web-servlet-42]]
+== Servlet
+
+1.1 Servlet 继承实现结构
+
+[source,sh]
+----
+Servlet (接口) 			-->      init|service|destroy方法
+GenericServlet(抽象类)  -->      与协议无关的Servlet
+HttpServlet(抽象类)		-->		 实现了http协议
+自定义Servlet			-->		 重写doGet/doPost
+----
+
+1.2 编写 Servlet 的步骤
+
+1. 继承 HttpServlet
+2. 重写 doGet/doPost 方法
+3. 在 web.xml 中注册 servlet
+
+1.3 Servlet 生命周期
+
+1. `init`:仅执行一次,负责装载 servlet 时初始化 servlet 对象
+2. `service`:核心方法,一般 get/post 两种方式
+3. `destroy`:停止并卸载 servlet,释放资源
+
+1.4 过程
+
+1. 客户端 request 请求 -> 服务器检查 Servlet 实例是否存在 -> 若存在调用相应 service 方法
+2. 客户端 request 请求 -> 服务器检查 Servlet 实例是否存在 -> 若不存在装载 Servlet 类并创建实例 -> 调用 init 初始化 -> 调用 service
+3. 加载和实例化、初始化、处理请求、服务结束
+
+1.5 doPost 方法要抛出的异常:ServletException、IOException
+
+1.6 Servlet 容器装载 Servlet
+
+1. web.xml 中配置 load-on-startup 启动时装载
+2. 客户首次向 Servlet 发送请求
+3. Servlet 类文件被更新后, 重新装载 Servlet
+
+1.7 HttpServlet 容器响应 web 客户请求流程
+
+1. Web 客户向servlet容器发出 http 请求
+2. servlet 容器解析 Web 客户的 http 请求
+3. servlet 容器创建一个 HttpRequest 对象, 封装http请求信息
+4. servlet 容器创建一个 HttpResponse 对象
+5. servlet 容器调用 HttpServlet的 service 方法, 把 HttpRequest 和 HttpResponse 对象作为 service 方法的参数传给 HttpServlet 对象
+6. HttpServlet 调用 HttpRequest 的有关方法, 获取http请求信息
+7. httpServlet 调用 HttpRequest 的有关方法, 生成响应数据
+8. Servlet 容器把 HttpServlet 的响应结果传给 web 客户
+
+1.8 HttpServletRequest 完成的一些功能
+
+1. request.getCookie()
+2. request.getHeader(String s)
+3. request.getContextPath()
+4. request.getSession()
+
+[source,text]
+----
+HttpSession session = request.getSession(boolean create)
+// 返回当前请求的会话
+----
+
+1.9 HttpServletResponse 完成一些的功能
+
+. 设http响应头
+. 设置 Cookie
+. 输出返回数据
+
+1.10 Servlet 与 JSP 九大内置对象的关系
+
+JSP对象 				怎样获得
+
+[source]
+----
+1. out				->		response.getWriter
+2. request 		->		Service方法中的req参数
+3. response 		->		Service方法中的resp参数
+4. session 		->		request.getSession
+5. application 	->		getServletContext
+6. exception 		->		Throwable
+7. page  			->		this
+8. pageContext  	->		PageContext
+9. Config 			->		getServletConfig
+----
+
+exception 是 JSP 九大内置对象之一,其实例代表其他页面的异常和错误.只有当页面是错误处理页面时,即isErroePage为 true时,该对象才可以使用.
+
+[[web-servlet-10]]
+== 阐述 Servlet 和 CGI 的区别
+
+Servlet 与 CGI 的区别在于 Servlet 处于服务器进程中,它通过多线程方式运行其 `service()` 方法，一个实例可以服务于多个请求,并且其实例一般不会销毁,而 CGI 对每个请求都产生新的进程，服务
+完成后就销毁,所以效率上低于 Servlet.
+
+补充: Sun Microsystems 公司在 1996 年发布 Servlet 技术就是为了和 CGI 进行竞争,Servlet 是一个特殊的 Java 程序,一个基于 Java 的 Web 应用通常包含一个或多个 Servlet 类。
+Servlet 不能够自行创建并执行,它是在 Servlet 容器中运行的,容器将用户的请求传递给 Servlet 程序,并将 Servlet 的响应回传给用户。
+通常一个 Servlet 会关联一个或多个 JSP 页面.以前 CGI 经常因为性能开销上的问题被诟病,然而 Fast CGI 早就已经解决了 CGI 效率上的问题，所以面试的时候大可不必信口开河的诟病 CGI。
+事实上有很多你熟悉的网站都使用了 CGI 技术.
+
+[[web-servlet-11]]
+== Servlet 接口中有哪些方法
+
+Servlet 接口定义了 5 个方法,其中前三个方法与 Servlet 生命周期相关:
+
+* void init(ServletConfig config) throws ServletException
+* void service(ServletRequest req, ServletResponse resp) throws ServletException, java.io.IOException
+* void destory() * java.lang.String getServletInfo() * ServletConfig getServletConfig()
+
+Web 容器加载 Servlet 并将其实例化后,Servlet 生命周期开始,容器运行其 `init()` 方法进行 Servlet 的初始化。
+请求到达时调用 Servlet 的 `service()` 方法,`service()` 方法会根据需要调用与请求对应的 doGet 或 doPost 等方法。
+当服务器关闭或项目被卸载时服务器会将 Servlet 实例销毁,此时会调用 Servlet 的 `destroy()` 方法.
+
+[[web-servlet-15]]
+== JSP 和 Servlet 是什么关系？
+
+其实这个问题在上面已经阐述过了,Servlet 是一个特殊的 Java 程序,它运行于服务器的 JVM 中,能够依靠服务器的支持向浏览器提供显示内容。
+JSP 本质上是 Servlet 的一种简易形式,JSP 会被服务器处理成一个类似于 Servlet 的 Java 程序,可以简化页面内容的生成。
+Servlet 和 JSP 最主要的不同点在于,Servlet 的应用逻辑是在 Java 文件中,并且完全从表示层中的 HTML 分离开来.而 JSP 的情况是 Java 和 HTML 可以组合成一个扩展名为 `.jsp` 的文件。
+有人说,Servlet 就是在 Java 中写 HTML,而 JSP 就是在 HTML 中写 Java 代码,当然这个说法是很片面且不够准确的。
+JSP 侧重于视图,Servlet 更侧重于控制逻辑,在 MVC 架构模式中,JSP 适合充当视图(view)而 Servlet 适合充当控制器(controller).
+
+[[web-servlet-17]]
+== 如何实现 JSP 或 Servlet 的单线程模式？
+
+对于 JSP 页面,可以通过 page 指令进行设置.
+
+[source,jsp]
+----
+<%@page isThreadSafe=”false”%>
+----
+
+对于 Servlet,可以让自定义的 Servlet 实现 `SingleThreadModel` 标识接口.
+说明:如果将 JSP 或 Servlet 设置成单线程工作模式,会导致每个请求创建一个 Servlet 实例,这种实践将导致严重的性能问题(服务器的内存压力很大,还会导致频繁的垃圾回收),所以通常情况下并不会这么做.
+
+[[web-servlet-19]]
+== 过滤器有哪些作用和用法
+
+Java Web 开发中的过滤器(filter)是从 Servlet 2.3 规范开始增加的功能,并在 Servlet 2.4 规范中得到增强.对 Web 应用来说,过滤器是一个驻留在服务器端的Web组件,它可以截取客户端和服务器之间
+的请求与响应信息,并对这些信息进行过滤.当 Web 容器接受到一个对资源的请求时,它将判断是否有过滤器与这个资源相关联.如果有,那么容器将把请求交给过滤器进行处理.在过滤器中,你可以改
+变请求的内容,或者重新设置请求的报头信息,然后再将请求发送给目标资源.当目标资源对请求作出响应时候,容器同样会将响应先转发给过滤器,在过滤器中你可以对响应的内容进行转换,然后再将响应发送到客户端。
+
+常见的过滤器用途主要包括:对用户请求进行统一认证、对用户的访问请求进行记录和审核、对用户发送的数据进行过滤或替换、转换图象格式、对响应内容进行压缩以减少传输量、对请求或响应进行加解密处理、触发资源访
+问事件、对 XML 的输出应用 XSLT 等。
+
+和过滤器相关的接口主要有:Filter、`FilterConfig` 和 `FilterChain`.
+
+编码过滤器的例子:
+
+[source,java]
+----
+import java.io.IOException;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.annotation.WebInitParam;
+@WebFilter(urlPatterns = { "*" },
+           initParams = {@WebInitParam(name="encoding", value="utf-8")})
+public class CodingFilter implements Filter {
+    private String defaultEncoding = "utf-8";
+    @Override
+    public void destroy() {
+    }
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse resp,
+                         FilterChain chain) throws IOException, ServletException {
+        req.setCharacterEncoding(defaultEncoding);
+        resp.setCharacterEncoding(defaultEncoding);
+        chain.doFilter(req, resp);
+    }
+    @Override
+    public void init(FilterConfig config) throws ServletException {
+        String encoding = config.getInitParameter("encoding");
+        if (encoding != null) {
+            defaultEncoding = encoding;
+        }
+    }
+}
+----
+
+下载计数过滤器的例子:
+
+[source,java]
+----
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+@WebFilter(urlPatterns = {"/*"})
+public class DownloadCounterFilter implements Filter {
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private Properties downloadLog;
+    private File logFile;
+    @Override
+    public void destroy() {
+        executorService.shutdown();
+    }
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse resp,
+                         FilterChain chain) throws IOException, ServletException {
+        HttpServletRequest request = (HttpServletRequest) req;
+        final String uri = request.getRequestURI();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                String value = downloadLog.getProperty(uri);
+                if(value == null) {
+                    downloadLog.setProperty(uri, "1");
+                }
+                else {
+                    int count = Integer.parseInt(value);
+                    downloadLog.setProperty(uri, String.valueOf(++count));
+                }
+                try {
+                    downloadLog.store(new FileWriter(logFile), "");
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        chain.doFilter(req, resp);
+    }
+    @Override
+    public void init(FilterConfig config) throws ServletException {
+        String appPath = config.getServletContext().getRealPath("/");
+        logFile = new File(appPath, "downloadLog.txt");
+        if(!logFile.exists()) {
+            try {
+                logFile.createNewFile();
+            }
+            catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+        downloadLog = new Properties();
+        try {
+            downloadLog.load(new FileReader(logFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+----
+
+说明:这里使用了 Servlet 3规范中的注解来部署过滤器,当然也可以在 `web.xml` 中使用 `<filter>` 和 `<filter-mapping>` 标签部署过滤器.
+
+[[web-servlet-20]]
+== 监听器有哪些作用和用法
+
+Java Web 开发中的监听器(listener)就是 application、session、request 三个对象创建、销毁或者往其中添加修改删除属性时自动执行代码的功能组件,如下所示:
+
+. ServletContextListener:对 Servlet 上下文的创建和销毁进行监听.
+. ServletContextAttributeListener:监听 Servlet 上下文属性的添加、删除和替换.
+. HttpSessionListener:对 Session 的创建和销毁进行监听. session 的销毁有两种情况:
+** session 超时(可以在 `web.xml` 中通过 `<session-config>/<session-timeout>` 标签配置超时时间);
+** 通过调用 session 对象的 `invalidate()` 方法使 session 失效.
+. HttpSessionAttributeListener: 对 Session 对象中属性的添加、删除和替换进行监听.
+. ServletRequestListener: 对请求对象的初始化和销毁进行监听.
+. ServletRequestAttributeListener: 对请求对象属性的添加、删除和替换进行监听.
+
+下面是一个统计网站最多在线人数监听器的例子:
+
+[source,java]
+----
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
+/** 上下文监听器,在服务器启动时初始化onLineCount和maxOnLineCount两个变量并将其置于服务器上下文(ServletContext)中,其初始值都是0
+*/
+@WebListener
+public class InitListener implements ServletContextListener {
+    @Override
+    public void contextDestroyed(ServletContextEvent evt) {
+    }
+    @Override
+    public void contextInitialized(ServletContextEvent evt) {
+        evt.getServletContext().setAttribute("onLineCount", 0);
+        evt.getServletContext().setAttribute("maxOnLineCount", 0);
+    }
+}
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import javax.servlet.ServletContext;
+import javax.servlet.annotation.WebListener;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
+/**
+会话监听器,在用户会话创建和销毁的时候根据情况修改onLineCount和maxOnLineCount的值
+*/
+@WebListener
+public class MaxCountListener implements HttpSessionListener {
+    @Override
+    public void sessionCreated(HttpSessionEvent event) {
+        ServletContext ctx = event.getSession().getServletContext();
+        int count = Integer.parseInt(ctx.getAttribute("onLineCount").toString());
+        count++;
+        ctx.setAttribute("onLineCount", count);
+        int maxOnLineCount = Integer.parseInt(ctx.getAttribute("maxOnLineCount").toString());
+        if (count > maxOnLineCount) {
+            ctx.setAttribute("maxOnLineCount", count);
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            ctx.setAttribute("date", df.format(new Date()));
+        }
+    }
+    @Override
+    public void sessionDestroyed(HttpSessionEvent event) {
+        ServletContext app = event.getSession().getServletContext();
+        int count = Integer.parseInt(app.getAttribute("onLineCount").toString());
+        count--;
+        app.setAttribute("onLineCount", count);
+    }
+}
+----
+
+说明:这里使用了 Servlet 3规范中的 `@WebListener` 注解配置监听器,当然你可以在 `web.xml` 文件中用 `<listener>` 标签配置监听器.
+
+[[web-servlet-21]]
+== web.xml 文件中可以配置哪些内容？
+
+`web.xml` 用于配置 Web 应用的相关信息,如:监听器(listener)、过滤器(filter)、Servlet、相关参数、会话超时时间、安全验证方式、错误页面等,下面是一些开发中常见的配置:
+
+[source,xml]
+----
+<--配置Spring上下文加载监听器加载Spring配置文件并创建IoC容器:-->
+<context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:applicationContext.xml</param-value>
+</context-param>
+<listener>
+    <listener-class>
+        org.springframework.web.context.ContextLoaderListener
+    </listener-class>
+</listener>
+
+<--配置Spring的OpenSessionInView过滤器来解决延迟加载和Hibernate会话关闭的矛盾:-->
+<filter>
+    <filter-name>openSessionInView</filter-name>
+    <filter-class>
+        org.springframework.orm.hibernate3.support.OpenSessionInViewFilter
+    </filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>openSessionInView</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+
+<--配置会话超时时间为10分钟:-->
+<session-config>
+    <session-timeout>10</session-timeout>
+</session-config>
+
+<--配置404和Exception的错误页面:-->
+<error-page>
+    <error-code>404</error-code>
+    <location>/error.jsp</location>
+</error-page>
+<error-page>
+    <exception-type>java.lang.Exception</exception-type>
+    <location>/error.jsp</location>
+</error-page>
+
+<--配置安全认证方式:-->
+<security-constraint>
+    <web-resource-collection>
+        <web-resource-name>ProtectedArea</web-resource-name>
+        <url-pattern>/admin/*</url-pattern>
+        <http-method>GET</http-method>
+        <http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+        <role-name>admin</role-name>
+    </auth-constraint>
+</security-constraint>
+<login-config>
+    <auth-method>BASIC</auth-method>
+</login-config>
+<security-role>
+    <role-name>admin</role-name>
+</security-role>
+----
+
+说明:对 Servlet(小服务)、Listener(监听器)和 Filter(过滤器)等 Web 组件的配置,Servlet 3 规范提供了基于注解的配置方式,可以分别使用 `@WebServlet`、`@WebListener`、`@WebFilter` 注解进行配置。
+
+补充:如果 Web 提供了有价值的商业信息或者是敏感数据,那么站点的安全性就是必须考虑的问题.安全认证是实现安全性的重要手段,认证就是要解决 "Are you who you say you are?" 的问题。
+
+认证的方式非常多,简单说来可以分为三类:
+
+A. What you know? ? 口令
+B. What you have? ? 数字证书(U盾、密保卡)
+C. Who you are? ?指纹识别、虹膜识别 在Tomcat中可以通过建立安全套接字层(Secure Socket Layer, SSL)以及通过基本验证或表单验证来实现对安全性的支持.
+
+[[web-servlet-27]]
+== Servlet 3 中的异步处理指的是什么？
+
+在 Servlet 3 中引入了一项新的技术可以让 Servlet 异步处理请求.有人可能会质疑,既然都有多线程了,还需要异步处理请求吗？答案是肯定的,因为如果一个任务处理时间相当长,那么 Servlet 或 Filter 会一直占用着请求处理线程直到任务结束,随着并发用户的增加,
+容器将会遭遇线程超出的风险,这这种情况下很多的请求将会被堆积起来而后续的请求可能会遭遇拒绝服务,直到有资源可以处理请求为止.异步特性可以帮助应用节省容器中的线程,特别适合执行时间长而且用户需要得到结果的任务,
+如果用户不需要得到结果则直接将一个 Runnable 对象交给 Executor 并立即返回即可.
+
+
+补充:多线程在 Java 诞生初期无疑是一个亮点,而 Servlet 单实例多线程的工作方式也曾为其赢得美名,然而技术的发展往往会颠覆我们很多的认知,就如同当年爱因斯坦的相对论颠覆了牛顿的经典力学一般.事实上,异步处理绝不是 Servlet 3 首创,如果你了解 Node.js 的话,对 Servlet 3 的这个重要改进就不以为奇了.
+
+下面是一个支持异步处理请求的 Servlet 的例子.
+
+[source,java]
+----
+import java.io.IOException;
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+@WebServlet(urlPatterns = {"/async"}, asyncSupported = true)
+public class AsyncServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+    @Override
+    public void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException {
+        // 开启Tomcat异步Servlet支持
+        req.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
+        final AsyncContext ctx = req.startAsync(); // 启动异步处理的上下文
+        // ctx.setTimeout(30000);
+        ctx.start(new Runnable() {
+            @Override
+            public void run() {
+                // 在此处添加异步处理的代码
+                ctx.complete();
+            }
+        });
+    }
+}
+----
+
+[[web-servlet-29]]
+== 服务器收到用户提交的表单数据,到底是调用 Servlet 的 doGet() 还是 doPost() 方法？
+
+HTML的 `<form>` 元素有一个 method 属性,用来指定提交表单的方式,其值可以是 get 或 post.我们自定义的 Servlet 一般情况下会重写 `doGet()` 或 `doPost()` 两个方法之一或全部,如果是GET请求就调用 `doGet()` 方法,如果是 POST 请求就调用 `doPost()` 方法,
+那为什么为什么这样呢？我们自定义的 Servlet 通常继承自 HttpServlet,HttpServlet 继承自 GenericServlet 并重写了其中的 `service()` 方法,这个方法是 Servlet 接口中定义的.HttpServlet 重写的 `service()` 方法会先获取用户请求的方法,
+然后根据请求方法调用 `doGet()`、`doPost()`、`doPut()`、`doDelete()` 等方法,如果在自定义 Servlet 中重写了这些方法,那么显然会调用重写过的(自定义的)方法,这显然是对模板方法模式的应用(如果不理解,请参考阎宏博士的《Java与模式》一书的第37章).
+当然,自定义 Servlet 中也可以直接重写 `service()` 方法,那么不管是哪种方式的请求,都可以通过自己的代码进行处理,这对于不区分请求方法的场景比较合适.
+
+[[web-servlet-31]]
+== Servlet 中如何获取用户提交的查询参数或表单数据？
+
+可以通过请求对象(HttpServletRequest)的 `getParameter()` 方法通过参数名获得参数值.如果有包含多个值的参数(例如复选框),可以通过请
+求对象的 `getParameterValues()` 方法获得.当然也可以通过请求对象的 `getParameterMap()` 获得一个参数名和参数值的映射(Map).
+
+[[web-servlet-32]]
+== Servlet 中如何获取用户配置的初始化参数以及服务器上下文参数？
+
+可以通过重写 Servlet 接口的 `init(ServletConfig)` 方法并通过 ServletConfig 对象的 `getInitParameter()` 方法来获取 Servlet 的初始化参数.可以通过 ServletConfig 对象的 `getServletContext()` 方法获取 `ServletContext` 对象,
+并通过该对象的 `getInitParameter()` 方法来获取服务器上下文参数.当然, ServletContext 对象也在处理用户请求的方法(如 `doGet()` 方法)中通过请求对象的 `getServletContext()` 方法来获得.
+

@@ -10,19 +10,11 @@ asciidoctor {
 	}
 }
 
-task asciidoctorMultipage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	sources {
-		include "*.adoc"
-	}
-}
 
-
-asciidoctorMultipage.dependsOn(asciidoctor)
-
-task aggregatedAsciidoctor(type: Copy) {
+tasks.register('aggregatedAsciidoctor', Copy) {
 	dependsOn rootProject.asciidoctor
 	dependsOn rootProject.asciidoctorPdf
-	dependsOn rootProject.asciidoctorMultipage
+	dependsOn rootProject.asciidoctorMultiPage
 
 	destinationDir = rootProject.file "${buildDir}"
 
@@ -30,7 +22,7 @@ task aggregatedAsciidoctor(type: Copy) {
 		into "generated/htmlsingle"
 	}
 
-	from(rootProject.asciidoctorMultipage.outputDir) {
+	from(rootProject.asciidoctorMultiPage.outputDir) {
 		into "generated/html5"
 	}
 

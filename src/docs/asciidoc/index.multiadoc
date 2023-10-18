@@ -19,7 +19,7 @@ https://www.jcohy.com[*https://www.jcohy.com/projects*]
 
 <<framework/index.adoc#java-framework,Java 框架>> :: 包含 Spring，Spring Boot，Mybatis，Nacos，Feign.
 
-<<sql/index.adoc#sql,SQL>> :: 包含 Redis ，Mysql.
+<<sql/index.adoc#sql,SQL>> :: 包含 Redis ，MySQL.
 
 <<distributed/index.adoc#distributed,分布式技术>> :: 包含 消息队列（RabbitMQ），Zookeeper，ElasticSearch，Dubbo，Nginx 等.
 

@@ -7,7 +7,7 @@
 基本内容
 
 * `Statement` 是最基本的用法, 不传参, 采用字符串拼接,存在注入漏洞
-* `PreparedStatement` 传入参数化的 sql 语句, 同时检查合法性, 效率高可以重用, 防止 sql 注入
+* `PreparedStatement` 传入参数化的 SQL 语句, 同时检查合法性, 效率高可以重用, 防止 SQL 注入
 * `CallableStatement` 接口扩展 `PreparedStatement`,用来调用存储过程
 * `BatchedStatement` 用于批量操作数据库,`BatchedStatement` 不是标准的 `Statement` 类
 

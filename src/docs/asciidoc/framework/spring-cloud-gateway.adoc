@@ -1,0 +1,56 @@
+[[spring-cloud-gateway]]
+= Spring Cloud Gateway
+
+
+== Spring Cloud Gateway 有哪些过滤器？
+
+Spring Cloud Gateway 是一个基于 Spring Framework 5、Project Reactor 和 Spring Boot 2 构建的 API 网关，它提供了一系列过滤器用于在请求进入网关和响应离开网关时进行各种操作和修改。
+以下是一些常用的 Spring Cloud Gateway 的过滤器：
+
+. 请求过滤器（Request Filter）：
+** 请求头过滤器（RequestHeader filter）：根据指定的请求头信息进行过滤和处理。
+** 请求参数过滤器（RequestParameter filter）：根据指定的请求参数进行过滤和处理。
+** 请求路径过滤器（RequestPath filter）：根据请求的路径进行过滤和处理。
+** 请求体过滤器（RequestBody filter）：对请求体中的内容进行过滤和处理。
+
+. 响应过滤器（Response Filter）：
+** 响应头过滤器（ResponseHeader filter）：根据指定的响应头信息进行过滤和处理。
+** 响应状态过滤器（ResponseStatus filter）：根据指定的响应状态进行过滤和处理。
+** 响应体过滤器（ResponseBody filter）：对响应体中的内容进行过滤和处理。
+
+. 全局过滤器（Global Filter）：
+** 全局前置过滤器（Global Pre Filter）：在请求进入网关之前进行处理，适用于对请求进行鉴权或者请求转发等操作。
+** 全局后置过滤器（Global Post Filter）：在响应离开网关之前进行处理，适用于对响应进行修改或者日志记录等操作。
+
+除了上述过滤器，Spring Cloud Gateway 还支持自定义过滤器，您可以根据需求实现自己的过滤器来进行特定的处理。
+
+== Spring Cloud Gateway 有哪些断言？
+
+Spring Cloud Gateway 提供了多种断言来匹配请求并决定是否将请求路由到目标服务。以下是一些常用的断言：
+
+1. Path Route Predicate：基于请求路径的匹配断言，可以使用 Ant 风格的路径模式（如`/path/**`）或精确匹配（如`/path`）来匹配请求的路径。
+2. Host Route Predicate：基于请求的主机名匹配断言，用于匹配请求的 Host 头信息。
+3. Method Route Predicate：基于请求的 HTTP 方法匹配断言，用于匹配请求的方法，如 GET、POST、PUT 等。
+4. Query Route Predicate：基于请求的查询参数匹配断言，可以使用查询参数的名称和值来匹配请求。
+5. Header Route Predicate：基于请求的头信息匹配断言，可以指定头信息的名称和值来匹配请求。
+6. Cookie Route Predicate：基于请求的 Cookie 匹配断言，可以匹配请求中的指定 Cookie。
+7. After Route Predicate：基于请求的时间戳断言，可以匹配请求时间是否在指定的时间点之后。
+8. Before Route Predicate：基于请求的时间戳断言，可以匹配请求时间是否在指定的时间点之前。
+9. RemoteAddr Route Predicate：基于请求的远程客户端 IP 地址断言，可以匹配请求的 IP 地址。
+10. CloudFoundryRouteService Route Predicate：用于匹配 Cloud Foundry 的路由服务（Routing Service）的断言。
+
+这些断言可以单独使用，也可以组合使用，通过逻辑运算符（如 AND 和 OR）组合多个断言条件来实现更复杂的路由规则。通过灵活地配置和组合这些断言，可以根据特定的请求属性来动态路由请求到不同的目标服务。
+
+== Spring Cloud Gateway 原理
+
+Spring Cloud Gateway 是基于 Spring WebFlux 构建的反应式 API 网关，其工作原理如下：
+
+1. 请求到达网关：当客户端发送请求到 Spring Cloud Gateway，请求首先到达网关服务器。
+2. 路由匹配：网关根据事先配置的路由规则，将请求与路由规则进行匹配。路由规则定义了请求的匹配条件，比如路径、主机名、HTTP 方法等。
+3. 过滤器执行：匹配成功的请求会进入过滤器链，过滤器链由一系列的过滤器组成。每个过滤器可以在请求发送到目标服务之前或之后对请求进行操作和处理。
+4. 请求转发：过滤器链执行完毕后，如果请求未被过滤器终止或重定向，网关将会将请求转发到目标服务。
+5. 目标服务处理：网关将请求转发到目标服务，目标服务根据请求进行处理，并返回响应。
+6. 响应返回：目标服务处理完请求后，将响应返回给网关。网关可以通过过滤器链对响应进行处理，如添加响应头、修改响应体等。
+7. 响应返回给客户端：经过过滤器处理后的响应最终返回给客户端，请求-响应的过程完成。
+
+Spring Cloud Gateway 的核心思想是基于路由和过滤器，可以在路由匹配和转发请求的同时，通过过滤器执行各种操作，如身份验证、日志记录、请求转发等。通过灵活配置和组合路由和过滤器，开发者可以实现自定义的网关行为，满足不同的业务需求。

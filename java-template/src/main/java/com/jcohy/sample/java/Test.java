@@ -1,5 +1,7 @@
 package com.jcohy.sample.java;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.jcohy.sample.java.juc.Account;
 
 /**
@@ -12,6 +14,8 @@ import com.jcohy.sample.java.juc.Account;
  * @since 1.0.0
  */
 public class Test {
+
+
 	public static void main(String[] args) throws Exception {
 		new Test().setA();
 	}

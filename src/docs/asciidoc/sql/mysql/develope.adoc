@@ -1,0 +1,989 @@
+[[sql-mysql-develope]]
+= MySQL 开发
+
+== Emoji 乱码怎么办?
+
+
+使用utf8mb4
+
+MySQL 在 5.5.3 之后增加了这个 utf8mb4 的编码，mb4 就是 most bytes 4的意思，专门用来
+兼容四字节的 unicode。好在 utf8mb4 是 utf8 的超集，除了将编码改为 utf8mb4 外不需要做其他转换。当然，一般情况 下使用 utf8 也就够了。
+
+== 如何存储ip地址?
+
+1. 使用字符串
+2. 使用无符号整型
+.. 4 个字节即解决问题
+.. 可以支持范围查询
+.. `INET_ATON()` 和 `INET_NTOA()` ipv6 使用 INET6_ATON() 和 INET6_NTOA()
+
+== 长文本如何存储?
+
+可以使用 Text 存储 TINYTEXT(255长度) TEXT(65535) MEDIUMTEXT(int 最大值 16M) LONGTEXT(long 最大值 4G)
+
+== 大段文本如何设计表结构?
+
+1. 或将大段文本同时存储到搜索引擎
+2. 分表存储
+3. 分表后多段存储
+
+== 大段文本查找时如何建立索引?
+
+1. 全文检索，模糊匹配最好存储到搜索引擎中
+2. 指定索引长度
+3. 分段存储后创建索引
+
+== 有没有在开发中使用过 TEXT,BLOB 数据类型
+
+BLOB 之前做 ERP 的时候使用过，互联网项目一般不用 BLOB
+
+TEXT 文献，文章，小说类，新闻，会议内容 等 111
+
+== 日期，时间如何存取?
+
+. 使用 TIMESTAMP，DATETIME
+. 使用字符串
+
+== TIMESTAMP，DATETIME 的区别是什么?
+
+跨时区的业务使用 TIMESTAMP，TIMESTAMP 会有时区转换
+
+1、两者的存储方式不一样:
+
+. 对于 TIMESTAMP，它把客户端插入的时间从当前时区转化为 UTC(世界标准时间)进行存储。查询时， 将其又转化为客户端当前时区进行返回。
+. 而对于 DATETIME，不做任何改变，基本上是原样输入和输出。
+
+2、存储字节大小不同
+
+|===
+| 数据类型  | MySQL 5.6.4 之前 | MySQL 5.6.4 之后
+
+| DATETIME
+| 8 bytes
+| 5 bytes + 小数秒存储
+
+| TIMESTAMP
+| 4 bytes
+| 4 bytes + 小数秒存储
+|===
+
+|===
+| 分秒数精度  | 存储字节大小
+
+| 0
+| 0 bytes
+
+| 1,2
+| 1 bytes
+
+| 3,4
+| 2 bytes
+
+| 5,6
+| 3 bytes
+|===
+
+
+3、两者所能存储的时间范围不一样:
+
+TIMESTAMP 所能存储的时间范围为:'1970-01-01 00:00:01.000000' 到 '2038-01-19 03:14:07.999999'。
+
+DATETIME 所能存储的时间范围为:'1000-01-01 00:00:00.000000' 到 '9999-12-31 23:59:59.999999'。
+
+== 为什么不使用字符串存储日期?
+
+字符串无法完成数据库内部的范围筛选
+
+在大数据量存储优化索引时，查询必须加上时间范围
+
+== 如果需要使用时间戳 timestamp 和 int 该如何选择?
+
+int 存储空间小，运算查询效率高，不受时区影响，精度低
+
+timestamp 存储空间小，可以使用数据库内部时间函数比如更新，精度高，需要注意时区转换， timestamp 更易读
+一般选择 timestamp，两者性能差异不明显，本质上存储都是使用的 int
+
+== char 与 varchar 的区别?如何选择?
+
+1. char 的优点是存储空间固定(最大255)，没有碎片，尤其更新比较频繁的时候，方便数据文件指针的操作，所以存储读取速度快。缺点是空间冗余，对于数据量大的表，非固定长度属性使用 char 字段，空 间浪费。
+2. varchar 字段，存储的空间根据存储的内容变化，空间长度为 L+size，存储内容长度加描述存储内容长 度信息，优点就是空间节约，缺点就是读取和存储时候，需要读取信息计算下标，才能获取完整内容。
+
+== decimal 与 float,double 的区别是什么?
+
+* float:浮点型，4字节，32bit。
+* double:双精度实型，8字节，64位
+* decimal:数字型，128bit，不存在精度损失 对于声明语法DECIMAL(M,D)，自变量的值范围如下:
+** M是最大位数(精度)，范围是1到65。可不指定，默认值是10。
+** D是小数点右边的位数(小数位)。范围是0到30，并且不能大于M，可不指定，默认值是0。
+
+例如字段 salary DECIMAL(5,2)，能够存储具有五位数字和两位小数的任何值，因此可以存储在 salary 列 中的值的范围是从 -999.99 到 999.99。
+
+== 浮点类型如何选型?为什么?
+
+* 需要不丢失精度的计算使用DECIMAL
+* 仅用于展示没有计算的小数存储可以使用字符串存储
+* 低价值数据允许计算后丢失精度可以使用 float
+* double 整型记录不会出现小数的不要使用浮点类型
+
+== 预编译 SQL 有什么好处?
+
+* 预编译 SQL 会被 MySQL 缓存下来
+* 作用域是每个 session，对其他 session 无效，重新连接也会失效
+* 提高安全性防止 SQL 注入
+** select * from user where id =? "1;
+** delete from user where id = 1";
+* 编译语句有可能被重复调用，也就是说 SQL 相同参数不同在同一 session 中重复查询执行效率明显比较高
+* MySQL 5,8 支持服务器端的预编译
+
+== 子查询与join哪个效率高?
+
+子查询虽然很灵活，但是执行效率并不高。
+
+==  为什么子查询效率低?
+
+* 在执行子查询的时候，MySQL 创建了临时表，查询完毕后再删除这些临时表
+* 子查询的速度慢的原因是多了一个创建和销毁临时表的过程。
+
+而 join 则不需要创建临时表 所以会比子查询快一点
+
+== join 查询可以无限叠加吗? MySQL 对 join 查询有什么限制吗?
+
+建议 join 不超过 3 张表关联，MySQL 对内存敏感，关联过多会占用更多内存空间，使性能下降 Too many tables; MySQL can only use 61 tables in a join;
+
+系统限制最多关联 61 个表
+
+== join 查询算法了解吗?
+
+* Simple Nested-Loop Join:SNLJ，简单嵌套循环连接
+* Index Nested-Loop Join:INLJ，索引嵌套循环连接
+* Block Nested-Loop Join:BNLJ，缓存块嵌套循环连接
+
+== 如何优化过多 join 查询关联?
+
+* 适当使用冗余字段减少多表关联查询
+* 驱动表和被驱动表(小表 join 大表)
+* 业务允许的话 尽量使用 inner join 让系统帮忙自动选择驱动表
+* 关联字段一定创建索引
+* 调整 JOIN BUFFER 大小
+
+== 是否有 过 MySQL 调优经验?
+
+调优:
+
+1. sql调优
+2. 表(结构)设计调优
+3. 索引调优
+4. 慢查询调优
+5. 操作系统调优
+6. 数据库参数调优
+
+== 开发中使用过哪些调优工具?
+
+官方自带:
+
+* EXPLAIN
+* mysqldumpslow
+* show profiles 时间
+* optimizer_trace
+
+第三方:性能诊断工具，参数扫描提供建议，参数辅助优化
+
+== 如何监控线上环境中执行比较慢的 SQL? 如何分析一条慢 SQL?
+
+开启慢查询日志，收集 SQL
+
+* 默认情况下，MySQL 数据库没有开启慢查询日志，需要我们手动来设置这个参数。
+* 当然，如果不是调优需要的话，一般不建议启动该参数，因为开启慢查询日志会或多或少带来一定的 性能影响。慢查询日志支持将日志记录写入文件。
+
+默认情况下 `slow_query_log` 的值为 OFF，表示慢查询日志是禁用的，
+
+[source,sql]
+----
+SHOW VARIABLES LIKE '%long_query_time%';
+SHOW GLOBAL VARIABLES LIKE 'long_query_time';
+
+-- 只对窗口生效，重启服务失效
+SET GLOBAL slow_query_log=1;
+
+-- 全局变量设置，对所有客户端有效。但，必须是设置后进行登录的客户端。
+ SET GLOBAL long_query_time=0.1;
+
+
+-- 对当前会话连接立即生效，对其他客户端无效。session 可省略
+SET SESSION long_query_time=0.1;
+----
+
+假如运行时间正好等于 `long_query_time` 的情况，并不会被记录下来。也就是说， 在 MySQL 源码里是判断大于 `long_query_time`，而非大于等于。
+
+永久生效则需要修改 `my.cnf`。[mysqld] 下增加或修改参数。slow_query_log 和 slow_query_log_file 后，然后重启 MySQL 服务器。也即将如下两行配置进 my.cnf 文件
+
+[source,sql]
+----
+slow_query_log =1
+slow_query_log_file=/var/lib/mysql/localhost-slow.log
+long_query_time=3
+log_output=FILE
+----
+
+关于慢查询的参数 `slow_query_log_file`，它指定慢查询日志文件的存放路径，如果不设置，系统默认文件:[host_name]-slow.log
+
+记录慢 SQL 并后续分析
+
+日志分析工具 mysqldumpslow
+
+1. 在生产环境中，如果要手工分析日志，查找、分析 SQL，显然是个体力活，MySQL 提供了日志分析 工具 mysqldumpslow。
+2. 查看 mysqldumpslow 的帮助信息
+
+[source,text]
+----
+jcohy@jcohy-mac ~ % mysqldumpslow --help
+Usage: mysqldumpslow [ OPTS... ] [ LOGS... ]
+
+Parse and summarize the MySQL slow query log. Options are
+
+  --verbose    verbose
+  --debug      debug
+  --help       write this text to standard output
+
+  -v           verbose
+  -d           debug
+  -s ORDER     是表示按照何种方式排序 (al, at, ar, c, l, r, t), 'at' 默认的
+                al: 平均锁定时间
+                ar: 平均返回记录数
+                at: 平均查询时间
+                 c: 访问次数
+                 l: 锁定时间
+                 r: 返回记录
+                 t: 查询时间
+  -r           reverse the sort order (largest last instead of first)
+  -t NUM       即为返回前面多少条的数据
+  -a           将数字抽象成 N，字符串抽象成 S
+  -n NUM       abstract numbers with at least n digits within names
+  -g PATTERN   后边搭配一个正则匹配模式，大小写不敏感的
+  -h HOSTNAME  hostname of db server for *-slow.log filename (can be wildcard),
+               default is '*', i.e. match all
+  -i NAME      name of server instance (if using mysql.server startup script)
+  -l           don't subtract lock time from total time
+
+得到返回记录集最多的 10 个 SQL mysqldumpslow -s r -t 10 /var/lib/mysql/localhost- slow.log
+得到访问次数最多的 10 个 SQL mysqldumpslow -s c -t 10 /var/lib/mysql/localhost-slow.log
+得到按照时间排序的前 10 条里面含有左连接的查询语句 mysqldumpslow -s t -t 10 -g "left join" /var/lib/mysql/localhost-slow.log
+另外建议在使用这些命令时结合 | 和 more 使用 ，否则有可能出现爆屏情况 mysqldumpslow -s r -t 10 /var/lib/mysql/localhost-slow.log | more
+----
+
+例如：
+
+[source,text]
+----
+得到返回记录集最多的 10 个 SQL mysqldumpslow -s r -t 10 /var/lib/mysql/localhost- slow.log
+得到访问次数最多的 10 个 SQL mysqldumpslow -s c -t 10 /var/lib/mysql/localhost-slow.log
+得到按照时间排序的前 10 条里面含有左连接的查询语句 mysqldumpslow -s t -t 10 -g "left join" /var/lib/mysql/localhost-slow.log
+另外建议在使用这些命令时结合 | 和 more 使用 ，否则有可能出现爆屏情况 mysqldumpslow -s r -t 10 /var/lib/mysql/localhost-slow.log | more
+----
+
+== 如何处理慢查询
+
+在业务系统中，除了使用主键进行的查询，其他的都会在测试库上测试其耗时，慢查询的统计主要由运维在做，会
+定期将业务中的慢查询反馈给我们。
+
+慢查询的优化首先要搞明白慢的原因是什么?是查询条件没有命中索引?是加载了不需要的数据列?还是数据量太大?
+
+所以优化也是针对这三个方向来的:
+
+* 首先分析语句，看看是否加载了额外的数据，可能是查询了多余的行并且抛弃掉了，可能是加载了许多结果中并不需要的列，对语句进行分析以及重写。
+* 分析语句的执行计划，然后获得其使用索引的情况，之后修改语句或者修改索引，使得语句可以尽可能的命中索引。
+* 如果对语句的优化已经无法进行，可以考虑表中的数据量是否太大，如果是的话可以进行横向或者纵向的分表。
+
+== 如何查看当前 SQL 使用了哪个索引?
+
+可以使用 EXPLAIN，选择索引过程可以使用 optimizer_trace
+
+== EXPLAIN 关键字中的重要指标有哪些?
+
+使用 EXPLAIN 关键字可以 模拟优化器执行 SQL 查询语句 ，从而知道 MySQL 是如何处理你的 SQL 语句的。
+
+我们准备一些数据：
+
+[source,sql]
+----
+use test;
+
+CREATE TABLE t1(id INT(10) AUTO_INCREMENT, content VARCHAR(100) NULL, PRIMARY
+KEY (id));
+CREATE TABLE t2(id INT(10) AUTO_INCREMENT, content VARCHAR(100) NULL, PRIMARY
+KEY (id));
+CREATE TABLE t3(id INT(10) AUTO_INCREMENT, content VARCHAR(100) NULL, PRIMARY
+KEY (id));
+CREATE TABLE t4(id INT(10) AUTO_INCREMENT, content1 VARCHAR(100) NULL, content2
+VARCHAR(100) NULL, PRIMARY KEY (id));
+CREATE INDEX idx_content1 ON t4(content1); -- 普通索引
+# 以下新增sql多执行几次，以便演示
+INSERT INTO t1(content) VALUES(CONCAT('t1_',FLOOR(1+RAND()*1000)));
+INSERT INTO t2(content) VALUES(CONCAT('t2_',FLOOR(1+RAND()*1000)));
+INSERT INTO t3(content) VALUES(CONCAT('t3_',FLOOR(1+RAND()*1000)));
+INSERT INTO t4(content1, content2) VALUES(CONCAT('t4_',FLOOR(1+RAND()*1000)), CONCAT('t4_',FLOOR(1+RAND()*1000)));
+----
+
+=== table
+
+[source,sql]
+----
+-- 单表:显示这一行的数据是关于哪张表的
+mysql> EXPLAIN SELECT * FROM t1;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+-- 多表关联:t1 为驱动表，t2 为被驱动表。
+mysql> EXPLAIN SELECT * FROM t1 inner join t2;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                         |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL                          |
+|  1 | SIMPLE      | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using join buffer (hash join) |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------------+
+2 rows in set, 1 warning (0.00 sec)
+----
+
+* 单表:显示这一行的数据是关于哪张表的
+* 多表关联:t1 为驱动表，t2 为被驱动表。
+
+NOTE:: 内连接时，MySQL性能优化器会自动判断哪个表是驱动表，哪个表示被驱动表，和书写的顺序无关
+
+=== id
+
+表示查询中执行 select 子句或操作表的顺序
+
+[source,sql]
+----
+-- id 相同:执行顺序由上至下
+mysql> EXPLAIN SELECT * FROM t1, t2, t3;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                         |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL                          |
+|  1 | SIMPLE      | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using join buffer (hash join) |
+|  1 | SIMPLE      | t3    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using join buffer (hash join) |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------------+
+3 rows in set, 1 warning (0.00 sec)
+
+-- id 不同:如果是子查询，id 的序号会递增，id 值越大优先级越高，越先被执行
+mysql> EXPLAIN SELECT t1.id FROM t1 WHERE t1.id =(
+    ->   SELECT t2.id FROM t2 WHERE t2.id =(
+    ->     SELECT t3.id FROM t3 WHERE t3.content = 't3_434'
+    ->   )
+    -> );
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                          |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+|  1 | PRIMARY     | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | no matching row in const table |
+|  2 | SUBQUERY    | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | no matching row in const table |
+|  3 | SUBQUERY    | t3    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where                    |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+3 rows in set, 1 warning (0.00 sec)
+
+-- NOTE:: 查询优化器可能对涉及子查询的语句进行优化，转为连接查询
+mysql> EXPLAIN SELECT * FROM t1 WHERE content IN (SELECT content FROM t2 WHERE content = 'a');
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------------------------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                                      |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------------------------------------------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where                                                |
+|  1 | SIMPLE      | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where; FirstMatch(t1); Using join buffer (hash join) |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------------------------------------------------+
+2 rows in set, 1 warning (0.00 sec)
+
+-- id 为 NULL:最后执行
+mysql> EXPLAIN SELECT * FROM t1 UNION SELECT * FROM t2;
++----+--------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+| id | select_type  | table      | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra           |
++----+--------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+|  1 | PRIMARY      | t1         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL            |
+|  2 | UNION        | t2         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL            |
+| NULL | UNION RESULT | <union1,2> | NULL       | ALL  | NULL          | NULL | NULL    | NULL | NULL |     NULL | Using temporary |
++----+--------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+3 rows in set, 1 warning (0.00 sec)
+----
+
+* id 如果相同，可以认为是一组，从上往下顺序执行
+* 在所有组中，id 值越大，优先级越高，越先执行
+* 关注点: id 号每个号码，表示一趟独立的查询, 一个 SQL 的查询趟数越少越好
+
+=== select_type
+
+查询的类型，主要是用于区别普通查询、联合查询、子查询等的复杂查询。
+
+[source,sql]
+----
+-- SIMPLE: 简单查询。查询中不包含子查询或者UNION。
+mysql> EXPLAIN SELECT * FROM t1;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+-- PRIMARY:主查询。查询中若包含子查询，则最外层查询被标记为PRIMARY。
+-- SUBQUERY:子查询。在 SELECT 或 WHERE 列表中包含了子查询。
+mysql> EXPLAIN SELECT * FROM t3 WHERE id = ( SELECT id FROM t2 WHERE content= 'a');
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                          |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+|  1 | PRIMARY     | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | no matching row in const table |
+|  2 | SUBQUERY    | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where                    |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+2 rows in set, 1 warning (0.00 sec)
+
+-- DEPENDENT SUBQUREY:如果包含了子查询，并且查询语句不能被优化器转换为连接查询，并且子查询是 相关子查询(子查询基于外部数据列) ，则子查询就是 DEPENDENT SUBQUREY。
+mysql> EXPLAIN SELECT * FROM t3 WHERE id = ( SELECT id FROM t2 WHERE content =
+    -> t3.content);
++----+--------------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type        | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+--------------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | PRIMARY            | t3    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where |
+|  2 | DEPENDENT SUBQUERY | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where |
++----+--------------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
+
+-- UNCACHEABLE SUBQUREY:表示这个 subquery 的查询要受到外部系统变量的影响
+mysql> EXPLAIN SELECT * FROM t3
+    -> WHERE id = ( SELECT id FROM t2 WHERE content = @@character_set_server);
++----+----------------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+| id | select_type          | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                          |
++----+----------------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+|  1 | PRIMARY              | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | no matching row in const table |
+|  2 | UNCACHEABLE SUBQUERY | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where                    |
++----+----------------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------+
+2 rows in set, 1 warning (0.00 sec)
+
+-- UNION: 对于包含 UNION 或者 UNION ALL 的查询语句，除了最左边的查询是 PRIMARY，其余的查 询都是UNION。
+-- UNION RESULT: UNION 会对查询结果进行查询去重，MYSQL 会使用临时表来完成 UNION 查询 的去重工作，针对这个临时表的查询就是 "UNION RESULT"。
+mysql> EXPLAIN
+    -> SELECT * FROM t3 WHERE id = 1
+    -> UNION
+    -> SELECT * FROM t2 WHERE id = 1;
++----+--------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+-----------------+
+| id | select_type  | table      | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra           |
++----+--------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+-----------------+
+|  1 | PRIMARY      | t3         | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL            |
+|  2 | UNION        | t2         | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL            |
+| NULL | UNION RESULT | <union1,2> | NULL       | ALL   | NULL          | NULL    | NULL    | NULL  | NULL |     NULL | Using temporary |
++----+--------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+-----------------+
+3 rows in set, 1 warning (0.00 sec)
+
+-- DEPENDENT UNION:子查询中的 UNION 或者 UNION ALL，除了最左边的查询是 DEPENDENT SUBQUREY，其余的查询都是 DEPENDENT UNION。
+mysql> EXPLAIN SELECT * FROM t1 WHERE content IN
+    -> (
+    -> SELECT content FROM t2
+    -> UNION
+    -> SELECT content FROM t3
+    -> );
++----+--------------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+| id | select_type        | table      | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra           |
++----+--------------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+|  1 | PRIMARY            | t1         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where     |
+|  2 | DEPENDENT SUBQUERY | t2         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where     |
+|  3 | DEPENDENT UNION    | t3         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where     |
+| NULL | UNION RESULT       | <union2,3> | NULL       | ALL  | NULL          | NULL | NULL    | NULL | NULL |     NULL | Using temporary |
++----+--------------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+4 rows in set, 1 warning (0.00 sec)
+
+-- DERIVED:在包含 派生表(子查询在 from 子句中) 的查询中，MySQL 会递归执行这些子查询，把结果放在临时表里。
+-- 这里的 <derived2> 就是在 id 为 2 的查询中产生的派生表。
+mysql> EXPLAIN SELECT * FROM (
+    ->    SELECT content, COUNT(*) AS c FROM t1 GROUP BY content
+    -> ) AS derived_t1 WHERE c > 1;
++----+-------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+| id | select_type | table      | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra           |
++----+-------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+|  1 | PRIMARY     | <derived2> | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    2 |   100.00 | NULL            |
+|  2 | DERIVED     | t1         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using temporary |
++----+-------------+------------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+2 rows in set, 1 warning (0.01 sec)
+
+-- MySQL 在处理带有派生表的语句时，优先尝试把派生表和外层查询进行合并，如果不行，再把派生表物化掉(执行子查询，并把结果放入临时表) ，然后执行查询。下面的例子就是就是将派生表和外层查 询进行合并的例子:
+mysql> EXPLAIN SELECT * FROM (SELECT * FROM t1 WHERE content = 't1_832') AS derived_t1;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | Using where |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+----
+
+=== partitions
+
+代表分区表中的命中情况，非分区表，该项为 NULL
+
+=== type
+
+说明:
+结果值从最好到最坏依次是:
+
+system > const > eq_ref > ref > fulltext > ref_or_null > index_merge > unique_subquery > index_subquery > range > index > ALL
+
+比较重要的包含:system、const 、eq_ref 、ref、range > index > ALL
+
+SQL 性能优化的目标:至少要达到 range 级别，要求是 ref 级别，最好是 consts 级别。(阿里巴巴开发手册要求)
+
+[source,sql]
+----
+-- ALL:全表扫描。Full Table Scan，将遍历全表以找到匹配的行
+mysql> EXPLAIN SELECT * FROM t1;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+-- index 使用索引。
+-- 覆盖索引: 如果能通过读取索引就可以得到想要的数据，那就不需要读取用户记录，或者不用再做回表 操作了。一个索引包含了满足查询结果的数据就叫做覆盖索引。
+-- 只需要读取聚簇索引部分的非叶子节点，就可以得到 id 的值，不需要查询叶子节点
+mysql> EXPLAIN SELECT id FROM t1;
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t1    | NULL       | index | NULL          | PRIMARY | 4       | NULL |    1 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- 只需要读取二级索引，就可以在二级索引中获取到想要的数据，不需要再根据叶子节点中的 id 做回表操作
+mysql> EXPLAIN SELECT id, content1 FROM t4;
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key          | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t4    | NULL       | index | NULL          | idx_content1 | 403     | NULL |    1 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- range: 只检索给定范围的行，使用一个索引来选择行。key 列显示使用了哪个索引，一般就是在 你的 where 语句中出现了 between、<、>、in 等的查询。
+-- 这种范围扫描索引扫描比全表扫描要好， 因为它只需要开始于索引的某一点，而结束于另一点，不用扫描全部索引。
+mysql> EXPLAIN SELECT * FROM t1 WHERE id IN (1, 2, 3);
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t1    | NULL       | range | PRIMARY       | PRIMARY | 4       | NULL |    3 |   100.00 | Using where |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- ref: 通过普通二级索引列与常量进行等值匹配时
+mysql> EXPLAIN SELECT * FROM t4 WHERE content1='t4_264';
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key          | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | t4    | NULL       | ref  | idx_content1  | idx_content1 | 403     | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+-- eq_ref: 连接查询时通过主键或不允许NULL值的唯一二级索引列进行等值匹配时
+mysql> EXPLAIN SELECT * FROM t1, t2 WHERE t1.id = t2.id;
++----+-------------+-------+------------+--------+---------------+---------+---------+------------+------+----------+-------+
+| id | select_type | table | partitions | type   | possible_keys | key     | key_len | ref        | rows | filtered | Extra |
++----+-------------+-------+------------+--------+---------------+---------+---------+------------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | ALL    | PRIMARY       | NULL    | NULL    | NULL       |    3 |   100.00 | NULL  |
+|  1 | SIMPLE      | t2    | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | test.t1.id |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+--------+---------------+---------+---------+------------+------+----------+-------+
+2 rows in set, 1 warning (0.00 sec)
+
+-- const: 根据 主键 或者 唯一二级索引列与 常数 进行匹配时
+mysql> EXPLAIN SELECT * FROM t1 WHERE id = 1;
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+-- system: MyISAM 引擎中，当表中只有一条记录时。(这是所有 type 的值中性能最高的场景)
+mysql> CREATE TABLE t(i int) Engine=MyISAM;
+Query OK, 0 rows affected (0.01 sec)
+mysql> INSERT INTO t VALUES(1);
+Query OK, 1 row affected (0.00 sec)
+mysql> EXPLAIN SELECT * FROM t;
++----+-------------+-------+------------+--------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table | partitions | type   | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-------+------------+--------+---------------+------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | t     | NULL       | system | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+--------+---------------+------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+-- index_subquery: 利用 普通索引来关联子查询，针对包含有 IN 子查询的查询语句。content1 是普通索引字段
+mysql> EXPLAIN SELECT * FROM t1 WHERE content IN (SELECT content1 FROM t4 WHERE
+    -> t1.content = t4.content2) OR content = 'a';
++----+--------------------+-------+------------+----------------+---------------+--------------+---------+------+------+----------+-------------+
+| id | select_type        | table | partitions | type           | possible_keys | key          | key_len | ref  | rows | filtered | Extra       |
++----+--------------------+-------+------------+----------------+---------------+--------------+---------+------+------+----------+-------------+
+|  1 | PRIMARY            | t1    | NULL       | ALL            | NULL          | NULL         | NULL    | NULL |    3 |   100.00 | Using where |
+|  2 | DEPENDENT SUBQUERY | t4    | NULL       | index_subquery | idx_content1  | idx_content1 | 403     | func |    1 |    33.33 | Using where |
++----+--------------------+-------+------------+----------------+---------------+--------------+---------+------+------+----------+-------------+
+2 rows in set, 2 warnings (0.01 sec)
+
+-- unique_subquery: 类似于 index_subquery，利用 唯一索引来关联子查询。t2 的 id 是主键，也可以理解为唯一的索引字段
+mysql> EXPLAIN SELECT * FROM t1 WHERE id IN (SELECT id FROM t2 WHERE t1.content =
+    -> t2.content) OR content = 'a';
++----+--------------------+-------+------------+-----------------+---------------+---------+---------+------+------+----------+-------------+
+| id | select_type        | table | partitions | type            | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
++----+--------------------+-------+------------+-----------------+---------------+---------+---------+------+------+----------+-------------+
+|  1 | PRIMARY            | t1    | NULL       | ALL             | NULL          | NULL    | NULL    | NULL |    3 |   100.00 | Using where |
+|  2 | DEPENDENT SUBQUERY | t2    | NULL       | unique_subquery | PRIMARY       | PRIMARY | 4       | func |    1 |    33.33 | Using where |
++----+--------------------+-------+------------+-----------------+---------------+---------+---------+------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
+
+-- index_merge: 在查询过程中需要 ，通常出现在有 or 的关键字的 sql 中。
+mysql> EXPLAIN SELECT * FROM t4 WHERE content1 = 't4_264' OR id = 1;
++----+-------------+-------+------------+-------------+----------------------+----------------------+---------+------+------+----------+------------------------------------------------+
+| id | select_type | table | partitions | type        | possible_keys        | key                  | key_len | ref  | rows | filtered | Extra                                          |
++----+-------------+-------+------------+-------------+----------------------+----------------------+---------+------+------+----------+------------------------------------------------+
+|  1 | SIMPLE      | t4    | NULL       | index_merge | PRIMARY,idx_content1 | idx_content1,PRIMARY | 403,4   | NULL |    2 |   100.00 | Using union(idx_content1,PRIMARY); Using where |
++----+-------------+-------+------------+-------------+----------------------+----------------------+---------+------+------+----------+------------------------------------------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- 当对普通二级索引进行等值匹配，且该索引列的值也可以是 NULL 值时。
+mysql> EXPLAIN SELECT * FROM t4 WHERE content1 = 't2_264' OR content1 IS NULL;
++----+-------------+-------+------------+-------------+---------------+--------------+---------+-------+------+----------+-----------------------+
+| id | select_type | table | partitions | type        | possible_keys | key          | key_len | ref   | rows | filtered | Extra                 |
++----+-------------+-------+------------+-------------+---------------+--------------+---------+-------+------+----------+-----------------------+
+|  1 | SIMPLE      | t4    | NULL       | ref_or_null | idx_content1  | idx_content1 | 403     | const |    2 |   100.00 | Using index condition |
++----+-------------+-------+------------+-------------+---------------+--------------+---------+-------+------+----------+-----------------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- fulltext:全文索引。一般通过搜索引擎实现，这里我们不展开。
+----
+
+=== possible_keys 和 keys
+
+* possible_keys 表示执行查询时可能用到的索引，一个或多个。 查询涉及到的字段上若存在索 引，则该索引将被列出，但不一定被查询实际使用。
+* keys 表示实际使用的索引。如果为NULL，则没有使用索引。
+
+[source,sql]
+----
+mysql> EXPLAIN SELECT id FROM t1 WHERE id = 1;
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------------+
+|  1 | SIMPLE      | t1    | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+----
+
+=== key_len
+
+表示索引使用的字节数，根据这个值可以判断索引的使用情况，检查是否充分利用了索引，针对联合索引值越大越好。
+
+如何计算:
+
+1. 先看索引上字段的类型+长度。比如:int=4 ; varchar(20) =20 ; char(20) =20
+2. 如果是 varchar 或者 char 这种字符串字段，视字符集要乘不同的值，比如 utf8 要乘 3，如果是 utf8mb4 要乘 4，GBK 要乘 2
+3. varchar 这种动态字符串要加 2 个字节
+4. 允许为空的字段要加 1 个字节
+
+[source,sql]
+----
+mysql> EXPLAIN SELECT id FROM t1 WHERE id = 1;
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------------+
+|  1 | SIMPLE      | t1    | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+----
+
+=== ref
+
+显示与 key 中的索引进行比较的列或常量。
+
+[source,sql]
+----
+-- ref = test.t1.id 关联查询时出现，t2 表和 t1 表的哪一列进行关联
+mysql> EXPLAIN SELECT * FROM t1, t2 WHERE t1.id = t2.id;
++----+-------------+-------+------------+--------+---------------+---------+---------+------------+------+----------+-------+
+| id | select_type | table | partitions | type   | possible_keys | key     | key_len | ref        | rows | filtered | Extra |
++----+-------------+-------+------------+--------+---------------+---------+---------+------------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | ALL    | PRIMARY       | NULL    | NULL    | NULL       |    3 |   100.00 | NULL  |
+|  1 | SIMPLE      | t2    | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | test.t1.id |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+--------+---------------+---------+---------+------------+------+----------+-------+
+2 rows in set, 1 warning (0.00 sec)
+
+-- ref=const 与索引列进行等值比较的东西是啥，const 表示一个常数
+mysql> EXPLAIN SELECT * FROM t4 WHERE content1 = 't4_264';
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key          | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | t4    | NULL       | ref  | idx_content1  | idx_content1 | 403     | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+----
+
+=== rows
+
+MySQL 认为它执行查询时必须检查的行数。值越小越好。
+
+* 如果是全表扫描，rows 的值就是表中数据的估计行数
+* 如果是使用索引查询，rows 的值就是预计扫描索引记录行数
+
+=== filtered
+
+最后查询出来的数据占所有服务器端检查行数(rows)的 。值越大越好。
+
+=== Extra
+
+包含不适合在其他列中显示但十分重要的额外信息。通过这些额外信息来理解 MySQL 到底将如何执行当前的查询语句。。MySQL 提供的额外信息有好几十个，这里只挑介绍比较重要的介绍。
+
+[source,sql]
+----
+-- Impossible WHERE: where 子句的值总是 false
+mysql> EXPLAIN SELECT * FROM t4 WHERE 1 != 1;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra            |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------+
+|  1 | SIMPLE      | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | Impossible WHERE |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- Using where: 使用了 where，但在 where 上有字段没有创建索引
+mysql> EXPLAIN SELECT * FROM t4 WHERE content2 = 't4_265';
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t4    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    3 |    33.33 | Using where |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- Using temporary: 使了用临时表保存中间结果
+mysql> EXPLAIN SELECT DISTINCT content FROM t1;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra           |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    3 |   100.00 | Using temporary |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- 在对查询结果中的记录进行排序时，是可以使用索引的，如下所示:
+mysql> EXPLAIN SELECT * FROM t1 ORDER BY id;
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | t1    | NULL       | index | NULL          | PRIMARY | 4       | NULL |    3 |   100.00 | NULL  |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+-- 如果排序操作无法使用到索引，只能在内存中(记录较少时)或者磁盘中(记录较多时)进行排序 (filesort)，如下所示:
+mysql> EXPLAIN SELECT * FROM t1 ORDER BY content;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra          |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    3 |   100.00 | Using filesort |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- Using index: 使用了覆盖索引，表示直接访问索引就足够获取到所需要的数据，不需要通过索引回表
+mysql> EXPLAIN SELECT id, content1 FROM t4;
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key          | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t4    | NULL       | index | NULL          | idx_content1 | 403     | NULL |    3 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> EXPLAIN SELECT id FROM t1;
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | t1    | NULL       | index | NULL          | PRIMARY | 4       | NULL |    3 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- Using index condition: 叫作 Index Condition Pushdown Optimization (索引下推优化)
+-- 如果没有索引下推(ICP)，那么 MySQL 在存储引擎层找到满足 content1 > 'z' 条件的第一条二级索引记录。 主键值进行回表 ，返回完整的记录给 server 层，server 层再判断其他的搜索条件是否成立。如果成立则保留该记录，否则跳过该记录，然后向存储引擎层要下一条记录。
+-- 如果使用了索引下推(ICP)，那么 MySQL 在存储引擎层找到满足 content1 > 'z'条件的第 一条二级索引记录。 不着急执行回表 ，而是在这条记录上先判断一下所有关于 idx_content1 索引中包含的条件是否成立，也就是 content1 > 'z' AND content1 LIKE '%a'是否成 立。
+-- 如果这些条件不成立，则直接跳过该二级索引记录，去找下一条二级索引记录;如果这些 条件成立，则执行回表操作，返回完整的记录给 server 层。
+-- content1 列上有索引 idx_content1
+mysql> EXPLAIN SELECT * FROM t4 WHERE content1 > 'z' AND content1 LIKE '%a';
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-----------------------+
+| id | select_type | table | partitions | type  | possible_keys | key          | key_len | ref  | rows | filtered | Extra                 |
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-----------------------+
+|  1 | SIMPLE      | t4    | NULL       | range | idx_content1  | idx_content1 | 403     | NULL |    1 |   100.00 | Using index condition |
++----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+-----------------------+
+1 row in set, 1 warning (0.01 sec)
+
+-- Using join buffer:在连接查询时，当被驱动表不能有效的利用索引时，MySQL 会为其分配一块 名为连接缓冲区(join buffer)的内存来加快查询速度
+mysql> EXPLAIN  SELECT * FROM t1, t2 WHERE t1.content = t2.content;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+|  1 | SIMPLE      | t1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    3 |   100.00 | NULL                                       |
+|  1 | SIMPLE      | t2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    3 |    33.33 | Using where; Using join buffer (hash join) |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+2 rows in set, 1 warning (0.00 sec)
+----
+
+== MySQL 数据库 cpu 飙升的话你会如何分析
+
+重点是定位问题。
+
+1 使用 top 观察 mysqld 的 cpu 利用率
+
+1. 切换到常用的数据库
+2. 使用show full processlist;查看会话
+3. 观察是哪些sql消耗了资源，其中重点观察 state 指标
+4. 定位到具体 sql
+
+2 pidstat
+
+1. 定位到线程
+2. 在 PERFORMANCE_SCHEMA.THREADS 中记录了 thread_os_id 找到线程执行的 sql
+3. 根据操作系统 id 可以到 processlist 表找到对应的会话
+4. 在会话中即可定位到问题 sql
+
+3 使用 show profile 观察 sql 各个阶段耗时
+
+4 服务器上是否运行了其他程序
+
+5 检查一下是否有慢查询
+
+6 pref top
+
+使用 pref 工具分析哪些函数引发的 cpu 过高来追踪定位
+
+== 有没有进行过分库分表?
+
+垂直分库
+
+一个数据库由很多表的构成，每个表对应着不同的业务，垂直切分是指按照业务将表进行分类，分布到不同的数据库上面，这样也就将数据或者说压力分担到不同的库上面。
+
+水平分表
+
+把一张表里的内容按照不同的规则 写到不同的库里。相对于垂直拆分，水平拆分不是将表做分类，而是按照某个字段的某种规则来分散到多个库之中，每个表中包含一部分数据。
+简单来说，我们可以将数据的水平切分理解为是按照数据行的切分，就是将表中的某些行切分到一个数据库，而另外的某些行又切分到其他的数据库中。
+
+可以使用 MyCat 或者 ShardingSphere 等中间件来做，具体怎么做就要结合具体的场景进行分析了。
+
+可以参考： https://database.51cto.com/art/201809/583857.html[https://database.51cto.com/art/201809/583857.html]
+
+== 什么时候进行分库分表?有没有配合 es 使用经验?
+
+1. 能不分就不分
+2. 单机性能下降明显的时候
+3. 增加缓存(通常查询量比较大)，细分业务
+4. 首先尝试主被集群，读写分离
+5. 尝试分库
+6. 尝试分表 -> 冷热数据分离
+
+大数据量下可以配合 es 完成高效查询
+
+== 说一下实现分库分表工具的实现思路
+
+1. 伪装成 MySQL 服务器，代理用户请求转发到真实服务器
+2. 基于本地 aop 实现，拦截 SQL，改写，路由和结果归集处理。
+
+== 分库分表后可能会有哪些问题?
+
+1. 执行效率明显降低
+2. 表结构很难再次调整
+3. 引发分布式id问题
+4. 产生跨库join
+5. 代理类中间件网络io成为瓶颈
+
+== 为什么要使用视图? 什么是视图?
+
+视图定义:
+
+1. 视图是一个虚表，是从一个或几个基本表(或视图)导出的表。
+2. 只存放视图的定义，不存放视图对应的数据。
+3. 基表中的数据发生变化，从视图中查询出的数据也随之改变。
+
+视图的作用:
+
+1. 视图能够简化用户的操作
+2. 视图使用户能以多种角度看待同一数据
+3. 视图对重构数据库提供了一定程度的逻辑独立性
+4. 视图能够对机密数据提供安全保护
+5. 适当的利用视图可以更清晰的表达查询
+
+== 什么是存储过程?有没有使用过?
+
+项目中禁止使用存储过程，存储过程难以调试和扩展，更没有移植性
+
+== 有没有使用过外键?有什么需要注意的地方?
+
+不得使用外键与级联，一切外键概念必须在应用层解决。
+
+说明:以学生和成绩的关系为例，学生表中的 student_id 是主键，那么成绩表中的 student_id 则为外键。如果更新学生表中的 student_id，同时触发成绩表中的 student_id 更新，即为级联更新。
+外键与级联更新适用于单机低并发，不适合分布式、高并发集群;级联更新是强阻塞，存在数据库更新风暴的风险;外键影响数据库的插入速度。
+
+== 用过 processlist 吗?
+
+关键的就是 state 列，MySQL 列出的状态主要有以下几种:
+
+* Checking table: 正在检查数据表(这是自动的)。
+* Closing tables: 正在将表中修改的数据刷新到磁盘中，同时正在关闭已经用完的表。这是一个很快的操作，如果不是这样的话，就应该确认磁盘空间是否已经满了或者磁盘是否正处于重负中。
+* Connect Out: 复制从服务器正在连接主服务器。
+* Copying to tmp table on disk: 由于临时结果集大于 tmp_table_size，正在将临时表从内存存储转为磁盘存储以此节省内存。
+* Creating tmp table: 正在创建临时表以存放部分查询结果。
+* deleting from main table: 服务器正在执行多表删除中的第一部分，刚删除第一个表。
+* deleting from reference tables: 服务器正在执行多表删除中的第二部分，正在删除其他表的记录。
+* Flushing tables: 正在执行FLUSH TABLES，等待其他线程关闭数据表。
+* Killed: 发送了一个 kill 请求给某线程，那么这个线程将会检查 kill 标志位，同时会放弃下一个 kill 请求。 MySQL 会在每次的主循环中检查 kill 标志位，不过有些情况下该线程可能会过一小段才能死掉。如果该线程程被其他线程锁住了，那么 kill 请求会在锁释放时马上生效。
+* Locked: 被其他查询锁住了。
+* Sending data: 正在处理 Select 查询的记录，同时正在把结果发送给客户端。Sending data 状态的含义，原来这个 状态的名称很具有误导性，所谓的“Sending data”并不是单纯的发送数据，而是包括“收集 + 发送 数据”。
+* Sorting for group: 正在为GROUP BY做排序。
+* Sorting for order: 正在为ORDER BY做排序。
+* Opening tables: 这个过程应该会很快，除非受到其他因素的干扰。例如，在执Alter TABLE或LOCK TABLE语句行完 以前，数据表无法被其他线程打开。正尝试打开一个表。
+* Removing duplicates: 正在执行一个 Select DISTINCT 方式的查询，但是 MySQL 无法在前一个阶段优化掉那些重复的记录。因此，MySQL 需要再次去掉重复的记录，然后再把结果发送给客户端。
+* Reopen table: 获得了对一个表的锁，但是必须在表结构修改之后才能获得这个锁。已经释放锁，关闭数据表，正 尝试重新打开数据表。
+* Repair by sorting: 修复指令正在排序以创建索引。
+* Repair with keycache: 修复指令正在利用索引缓存一个一个地创建新索引。它会比 Repair by sorting 慢些。
+* Searching rows for update: 正在讲符合条件的记录找出来以备更新。它必须在 Update 要修改相关的记录之前就完成了。
+* Sleeping: 正在等待客户端发送新请求.
+* System lock 正在等待取得一个外部的系统锁。如果当前没有运行多个 mysqld 服务器同时请求同一个表，那么可以通过增加 --skip-external-locking 参数来禁止外部系统锁。
+* Upgrading lock: Insert DELAYED 正在尝试取得一个锁表以插入新记录。
+* Updating: 正在搜索匹配的记录，并且修改它们。
+* User Lock: 正在等待GET_LOCK()。
+* Waiting for tables: 该线程得到通知，数据表结构已经被修改了，需要重新打开数据表以取得新的结构。然后，为了能的重新打开数据表，必须等到所有其他线程关闭这个表。以下几种情况下会产生这个通知:FLUSH TABLES tbl_name, Alter TABLE, RENAME TABLE, REPAIR TABLE, ANALYZE TABLE,或OPTIMIZE TABLE。
+* waiting for handler insert: Insert DELAYED 已经处理完了所有待处理的插入操作，正在等待新的请求。
+
+== 某个表有数千万数据，查询比较慢，如何优化?说一下思路
+
+. 前端优化 减少查询
+.. 合并请求:多个请求需要的数据尽量一条 sql 拿出来
+.. 会话保存:和用户会话相关的数据尽量一次取出重复使用
+.. 避免无效刷新
+. 多级缓存 不要触及到数据库
+.. 应用层热点数据高速查询缓存(低一致性缓存)
+.. 高频查询大数据量镜像缓存(双写高一致性缓存)
+.. 入口层缓存(几乎不变的系统常量)
+. 使用合适的字段类型，比如 varchar 换成 char
+. 一定要高效使用索引。
+.. 使用explain 深入观察索引使用情况
+.. 检查 select 字段最好满足索引覆盖
+.. 复合索引注意观察 key_len 索引使用情况
+.. 有分组，排序，注意 file sort，合理配置相应的 buffer 大小
+. 检查查询是否可以分段查询，避免一次拿出过多无效数据
+. 多表关联查询是否可以设置冗余字段，是否可以简化多表查询或分批查询
+. 分而治之:把服务拆分成更小力度的微服务
+. 冷热数据分库存储
+. 读写分离，主被集群 然后再考虑分库分表
+. 等
+
+== count(列名)和 count(*)有什么区别?
+
+标准统计行数的语法，跟数据库无关，跟 NULL 和非 NULL 无关。
+
+说明:count() 会统计值为 NULL 的行，而 count(列名) 不会统计此列为 NULL 值的行。
+
+== SQL 的 select 语句完整的执行顺序
+
+SQL Select 语句完整的执行顺序：
+
+. from 子句组装来自不同数据源的数据；
+. where 子句基于指定的条件对记录行进行筛选；
+. group by 子句将数据划分为多个分组；
+. 使用聚集函数进行计算；
+. 使用 having 子句筛选分组；
+. 计算所有的表达式；
+. select 的字段；
+. 使用 order by 对结果集进行排序。

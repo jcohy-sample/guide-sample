@@ -14,3 +14,20 @@ Client 可以时 JDK 原生的 `URLConnection`, Apache 的 HttpClient,也可以�
 
 image::{oss-images}/feign.png[]
 
+== Feign 和 OpenFeign 的关系
+
+Feign 和 OpenFeign 实际上是同一个组件的不同版本。Feign 最初是由 Spring Cloud 团队开发的一个声明式的 HTTP 客户端，它简化了服务间的通信，通过定义接口来描述 HTTP 请求，Feign 会自动处理请求的生成和发送。
+
+2019 年 Netflix 公司宣布 Feign 组件正式进入停更维护状态，于是 Spring 官方便推出了一个名为 OpenFeign 的组件作为 Feign 的替代方案。
+后来，Spring Cloud 团队决定将 Feign 的维护权交给了 OpenFeign 社区，OpenFeign 在原有的 Feign 基础上进行了改进和拓展。OpenFeign 提供了更多的功能和特性，以满足更复杂的服务间通信需求。
+
+OpenFeign 与 Feign 相比具有以下好处：
+
+1. 支持对 Spring Cloud 的原生支持：OpenFeign 更好地集成了 Spring Cloud 的功能，如服务注册、负载均衡等。
+2. 支持更丰富的注解：OpenFeign 提供了更多的注解，如 @RequestParam、@PathVariable 等，更好地支持常见的 RESTful API 调用。
+3. 支持更灵活的配置：OpenFeign 提供了更多的配置选项，可以根据具体的需求灵活地配置超时时间、错误处理等行为。
+
+总结来说，Feign 是 Spring Cloud 中早期的版本，而 OpenFeign 是在 Feign 的基础上进行改进和拓展的版本，提供了更好的集成和更丰富的功能。因此，对于在使用 Spring Cloud 进行微服务开发的项目来说，推荐使用 OpenFeign 来进行服务间的通信操作。
+
+
+

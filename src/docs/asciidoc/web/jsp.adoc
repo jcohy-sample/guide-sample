@@ -174,7 +174,7 @@ JSP 中的四种作用域包括 page、request、 Session 和 application,具体
 
 项目中主要使用了 JSTL 的核心标签库,包括 `<c:if>、<c:choose>、<c: when>、<c: otherwise>、<c:forEach>` 等,主要用于构造循环和分支结构以控制显示逻辑.
 
-说明:虽然 JSTL 标签库提供了 core、sql、fmt、xml 等标签库,但是实际开发中建议只使用核心标签库(core),而且最好只使用分支和循环标签并辅以表达式语言(EL),这样才能真正做到数
+说明:虽然 JSTL 标签库提供了 core、SQL、fmt、xml 等标签库,但是实际开发中建议只使用核心标签库(core),而且最好只使用分支和循环标签并辅以表达式语言(EL),这样才能真正做到数
 据显示和业务逻辑的分离,这才是最佳实践.
 
 [[web-jsp-4]]

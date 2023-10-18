@@ -1,0 +1,914 @@
+[[sql-mysql-sample]]
+= Sample
+
+== 你们公司有哪些数据库设计规范
+
+=== 基础规范
+. 表存储引擎必须使用 InnoD，表字符集默认使用 utf8，必要时候使用 utf8mb4
+** 解读：
+*** 通用，无乱码风险，汉字 3 字节，英文 1 字节
+*** utf8mb4 是 utf8 的超集，有存储 4 字节例如表情符号时，使用它
+. 禁止使用存储过程，视图，触发器，Event
+** 解读：
+*** 对数据库性能影响较大，互联网业务，能让站点层和服务层干的事情，不要交到数据库层
+*** 调试，排错，迁移都比较困难，扩展性较差
+. 禁止在数据库中存储大文件，例如照片，可以将大文件存储在对象存储系统，数据库中存储路径
+. 禁止在线上环境做数据库压力测试
+. 测试，开发，线上数据库环境必须隔离
+
+=== 命名规范
+
+. 库名，表名，列名必须用小写，采用下划线分隔
+** 解读
+*** abc，Abc，ABC 都是给自己埋坑
+. 库名，表名，列名必须见名知义，长度不要超过 32 字符
+** 解读
+*** tmp，wushan 谁知道这些库是干嘛的
+. 库备份必须以 bak 为前缀，以日期为后缀
+. 从库必须以 `-s` 为后缀
+. 备库必须以 `-ss` 为后缀
+
+=== 表设计规范
+
+. 单实例表个数必须控制在 2000 个以内
+. 单表分表个数必须控制在 1024 个以内
+. 表必须有主键，推荐使用 UNSIGNED 整数为主键
+** 潜在坑：删除无主键的表，如果是 row 模式的主从架构，从库会挂住
+. 禁止使用外键，如果要保证完整性，应由应用程式实现
+** 解读
+*** 外键使得表之间相互耦合，影响 update/delete 等SQL 性能，有可能造成死锁，高并发情况下容易成为数据库瓶颈
+. 建议将大字段，访问频度低的字段拆分到单独的表中存储，分离冷热数据
+
+=== 列设计规范
+. 根据业务区分使用 tinyint/int/bigint，分别会占用 1/4/8 字节
+. 根据业务区分使用 char/varchar
+** 解读：
+*** 字段长度固定，或者长度近似的业务场景，适合使用 char，能够减少碎片，查询性能高
+*** 字段长度相差较大，或者更新较少的业务场景，适合使用 varchar，能够减少空间
+. 根据业务区分使用 datetime/timestamp
+** 解读
+*** 前者占用 5 个字节，后者占用 4 个字节，存储年使用 YEAR，存储日期使用 DATE，存储时间使用 datetime
+. 必须把字段定义为 NOT NULL 并设默认值
+** 解读：
+*** NULL 的列使用索引，索引统计，值都更加复杂，MySQL 更难优化
+*** NULL 需要更多的存储空间
+*** NULL 只能采用 IS NULL 或者 IS NOT NULL，而在=/!=/in/not in 时有大坑
+. 使用 INT UNSIGNED 存储 IPv4，不要用 char(15)
+. 使用 varchar(20)存储手机号，不要使用整数
+** 解读：
+*** 牵扯到国家代号，可能出现+/-/()等字符，例如+86
+*** 手机号不会用来做数学运算
+*** varchar 可以模糊查询，例如 like ‘138%’
+. 使用 TINYINT 来代替 ENUM
+** 解读：
+*** ENUM 增加新值要进行 DDL 操作
+
+=== 索引规范
+. 唯一索引使用 uniq_[字段名]来命名
+. 非唯一索引使用 idx_[字段名]来命名
+. 单张表索引数量建议控制在 5 个以内
+** 解读：
+*** 互联网高并发业务，太多索引会影响写性能
+*** 生成执行计划时，如果索引太多，会降低性能，并可能导致 MySQL 选择不到最优索引
+*** 异常复杂的查询需求，可以选择 ES 等更为适合的方式存储
+. 组合索引字段数不建议超过 5 个
+** 解读
+*** 如果 5 个字段还不能极大缩小 row 范围，八成是设计有问题
+. 不建议在频繁更新的字段上建立索引
+. 非必要不要进行 JOIN 查询，如果要进行 JOIN 查询，被 JOIN 的字段必须类型相同，并建立索引
+** 解读
+*** 踩过因为 JOIN 字段类型不一致，而导致全表扫描的坑么？
+. 理解组合索引最左前缀原则，避免重复建设索引，如果建立了(a,b,c)，相当于建立了(a), (a,b), (a,b,c)
+
+=== SQL 规范
+. 禁止使用 select *，只获取必要字段
+** 解读
+*** `select *` 会增加 cpu/io/内存/带宽的消耗
+*** 指定字段能有效利用索引覆盖
+*** 指定字段查询，在表结构变更时，能保证对应用程序无影响
+. insert 必须指定字段，禁止使用 insert into T values()
+** 解读
+*** 指定字段插入，在表结构变更时，能保证对应用程序无影响
+. 隐式类型转换会使索引失效，导致全表扫描
+. 禁止在 where 条件列使用函数或者表达式
+** 解读：导致不能命中索引，全表扫描
+. 禁止负向查询以及%开头的模糊查询
+** 解读：导致不能命中索引，全表扫描
+. 禁止大表 JOIN 和子查询
+. 同一个字段上的 OR 必须改写问 IN，IN 的值必须少于 50 个
+. 应用程序必须捕获 SQL 异常
+** 解读：方便定位线上问题
+
+说明：本规范适用于并发量大，数据量大的典型互联网业务，可直接参考。
+
+== 有没有设计过数据表?你是如何设计的?
+
+
+|===
+| 范式 | 说明
+
+| 第一范式
+| 每一列属性(字段)不可分割的,字段必须保证原子性两列的属性值相近或者一样的,尽量合并到一列或者分表,确保数据不冗余
+
+| 第二范式
+| 每一行的数据只能与其中一行有关 即 主键 一行数据只能做一件事情或者表达一个意思，只要数据出现重复,就要进行表的拆分
+
+| 第三范式
+| 数据不能存在传递关系,每个属性都跟主键有直接关联而不是间接关联
+|===
+
+== MySQL 优化
+
+. 尽量选择较小的列
+. 将 where 中用的比较频繁的字段建立索引
+. select 子句中避免使用‘*’
+. 避免在索引列上使用计算、not in 和<>等操作
+. 当只需要一行数据的时候使用 limit 1
+. 保证单表数据不超过 200W，适时分割表。针对查询较慢的语句，可以使用 explain 来分析该语句具体的执行情况。
+. 避免改变索引列的类型。
+. 选择最有效的表名顺序，from 字句中写在最后的表是基础表，将被最先处理，在 from 子句中包含多个表的情况下，你必须选择记录条数最少的表作为基础表。
+. 避免在索引列上面进行计算。
+. 尽量缩小子查询的结果
+
+== SQL 语句优化案例
+
+=== where 子句中可以对字段进行 null 值判断吗？
+
+可以，比如 select id from t where num is null 这样的 SQL 也是可以的。但是最好不要给数据库留 NULL，尽可能的
+使用 NOT NULL 填充数据库。不要以为 NULL 不需要空间，比如：char(100) 型，在字段建立时，空间就固定了，
+不管是否插入值（NULL 也包含在内），都是占用 100 个字符的空间的，如果是 varchar 这样的变长字段，null 不
+占用空间。可以在 num 上设置默认值 0，确保表中 num 列没有 null 值，然后这样查询： `select id from t where num=0`。
+
+=== 如何优化?下面的语句？
+
+`select * from admin left join log on admin.admin_id = log.admin_id where log.admin_id>10`
+
+优化为：`select * from (select * from admin where admin_id>10) T1 lef join log on T1.admin_id = log.admin_id`。
+
+使用 JOIN 时候，应该用小的结果驱动大的结果（left join 左边表结果尽量小如果有条件应该放到左边先处理， right
+join 同理反向），同时尽量把牵涉到多表联合的查询拆分多个 query （多个连表查询效率低，容易到之后锁表和阻塞）。
+
+=== limit 的基数比较大时使用 between
+
+例如：`select * from admin order by admin_id limit 100000,10`
+
+优化为：`select * from admin where admin_id between 100000 and 100010 order by admin_id`。
+
+=== 尽量避免在列上做运算，这样导致索引失效
+
+例如：`select * from admin where year(admin_time)>2014`
+
+优化为： `select * from admin where admin_time> '2014-01-01′`
+
+[[sql-mysql-5]]
+== 案例1
+
+[[sql-mysql-5-student-tbl]]
+.Student 学生表
+|===
+| 表字段                     | 说明
+
+| SID              | 主键
+
+| Sname         | 名字
+
+| Sage           | 年龄
+
+| Ssex           | 性别
+
+| Sbirth           | 生日
+|===
+
+[[sql-mysql-5-course-tbl]]
+.Course 课程表
+|===
+| 表字段                     | 说明
+
+| CID              | 主键
+
+| Cname         | 名字
+
+| TID           | 教师ID
+|===
+
+[[sql-mysql-5-sc-tbl]]
+.SC 成绩表
+|===
+| 表字段                     | 说明
+
+| SID              | 主键
+
+| CID         | 课程ID
+
+| score           | 分数
+|===
+
+[[sql-mysql-5-teacher-tbl]]
+.Teacher 教师表
+|===
+| 表字段                     | 说明
+
+| TID              | 主键
+
+| Tname         | 名字
+|===
+
+1、查询201课程比202课程成绩高的所有学生的学号
+
+[source,sql]
+----
+select a.SID from (select Sid,score from SC where CID=201) a,(select Sid,score from SC where CID=202) b where a.score>b.score a.score>b.score and a.Sid=b.Sid;
+----
+
+2、查询平均成绩大于60分的同学的学号和平均成绩;
+
+[source,sql]
+----
+select SID,avg(score) from sc group by SID having avg(score) >60;
+----
+
+3、查询所有同学的学号、姓名、选课数、总成绩;
+
+[source,sql]
+----
+select Student.SID,Student.Sname,count(SC.CID),sum(score) from Student left Outer join SC on Student.SID=SC.SID
+    group by Student.SID,Sname
+----
+
+4、查询姓“李”的老师的个数;
+
+[source,sql]
+----
+select count(distinct(Tname))
+from Teacher
+where Tname like '李%';
+----
+
+5、查询没学过“叶平”老师课的同学的学号、姓名;
+
+[source,sql]
+----
+select Student.SID,Student.Sname
+from Student
+where SID not in (select distinct(SC.SID) from SC,Course,Teacher
+                  where SC.CID=Course.CID and Teacher.TID=Course.TID and Teacher.Tname='叶平');
+select student.sid,student.sname
+from student
+where sid not in (
+    select sid
+    from sc
+    where cid in (
+        select cid
+        from course
+        where tid = (select tid
+                     from teacher
+                     where tname = '叶平')
+    )
+)
+----
+
+6、查询学过“201”并且也学过编号“202”课程的同学的学号、姓名;
+
+[source,sql]
+----
+select Student.SID,Student.Sname
+from Student,SC
+where Student.SID=SC.SID and SC.CID='001'and exists(
+    Select * from SC as SC_2 where SC_2.SID=SC.SID and SC_2.CID='002');
+----
+
+7、查询学过“叶平”老师所教的所有课的同学的学号、姓名;
+
+[source,sql]
+----
+select SID,Sname
+from Student
+where SID in (select SID from SC ,Course ,Teacher
+              where SC.CID=Course.CID and Teacher.TID=Course.TID and Teacher.Tname='叶平'
+              group by SID having count(SC.CID)=(select count(CID) from Course,Teacher
+                                                 where Teacher.TID=Course.TID and Tname='叶平'));
+----
+
+
+8、查询课程编号“202”的成绩比课程编号“201”课程低的所有同学的学号、姓名;
+
+[source,sql]
+----
+Select SID,Sname from (select Student.SID,Student.Sname,score ,(select score from SC SC_2 where SC_2.SID=Student.SID and SC_2.CID='002') score2
+                       from Student,SC where Student.SID=SC.SID and CID='001') S_2 where score2 <score;
+----
+
+9、查询所有课程成绩小于60分的同学的学号、姓名;
+(取反操作处理)
+
+[source,sql]
+----
+select SID,Sname
+from Student
+where SID not in (select Student.SID from Student,SC where S.SID=SC.SID and score>60);
+----
+
+10、查询没有学全所有课的同学的学号、姓名;
+
+(count(CID)得到课程的数目)
+
+[source,sql]
+----
+select Student.SID,Student.Sname
+from Student,SC
+where Student.SID=SC.SID group by Student.SID,Student.Sname having count(CID) <(select count(CID) from Course);
+----
+
+
+11、查询至少有一门课与学号为“1001”的同学所学相同的同学的学号和姓名;
+
+[source,sql]
+----
+select SID,Sname from Student,SC where Student.SID=SC.SID and CID in (select CID from SC where SID='1001');
+----
+
+12、查询至少学过学号为“1001”同学所有一门课的其他同学学号和姓名;
+
+[source,sql]
+----
+select distinct SC.SID,Sname
+from Student,SC
+where Student.SID=SC.SID and CID in (select CID from SC where SID='001')
+and Student.SID <> 1001;
+----
+
+
+13、把“SC”表中“叶平”老师教的课的成绩都更改为此课程的平均成绩;
+
+[source,sql]
+----
+update SC
+set score=(select avg(SC_2.score)
+           from SC SC_2
+           where SC_2.CID=SC.CID )
+where cid = (
+    select cid
+    from Course,Teacher
+    where Course.CID=SC.CID and Course.TID=Teacher.TID and Teacher.Tname='叶平'
+)
+----
+
+
+14、查询和“1002”号的同学学习的课程完全相同的其他同学学号和姓名;
+
+[source,sql]
+----
+select SID
+from SC
+where CID in (select CID from SC where SID='1002')
+group by SID having count(*)=(select count(*) from SC where SID='1002');
+----
+
+15、删除学习“叶平”老师课的SC表记录;
+
+[source,sql]
+----
+Delete from sc
+where cid = (
+    select cid
+    from course ,Teacher
+    where Course.CID=SC.CID and Course.TID= Teacher.TID and Tname='叶平'
+)
+
+----
+
+16、向SC表中插入一些记录,这些记录要求符合以下条件: 没有上过编号“003”课程的同学学号、002号课的平均成绩;
+
+[source,sql]
+----
+Insert into SC
+as select SID,'002',(Select avg(score)
+                     from SC where CID='002')
+from Student
+where SID not in (Select SID from SC where CID='002');
+----
+
+17、按学生平均成绩从高到低显示所有学生的“数据库”、“企业管理”、“英语”三门的课程成绩,按如下形式显示: 学生ID,数据库,企业管理,英语,有效课程数,有效平均分
+(默认数据库是004,企业管理是001,英语是006)
+
+[source,sql]
+----
+SELECT SID as 学生ID
+,(SELECT score FROM SC WHERE SC.SID=t.SID AND CID='004') AS 数据库
+,(SELECT score FROM SC WHERE SC.SID=t.SID AND CID='001') AS 企业管理
+,(SELECT score FROM SC WHERE SC.SID=t.SID AND CID='006') AS 英语
+,COUNT(*) AS 有效课程数, AVG(t.score) AS 平均成绩
+FROM SC AS t
+GROUP BY SID
+ORDER BY avg(t.score)
+----
+
+18、查询各科成绩最高和最低的分,以及对应的学号: 以如下形式显示: 课程ID,最高分,学号,最低分,学号
+
+[source,sql]
+----
+SELECT L.CID courseID,L.score 最高分,L.sid 学号,R.score 最低分,R.sid 学号
+FROM SC L ,SC R
+WHERE L.CID = R.CID and
+L.score = (SELECT MAX(IL.score)
+           FROM SC IL,Student IM
+           WHERE L.CID = IL.CID and IM.SID=IL.SID
+           GROUP BY IL.CID)
+AND
+R.Score = (SELECT MIN(IR.score)
+           FROM SC IR
+           WHERE R.CID = IR.CID
+           GROUP BY IR.CID)
+----
+
+19、查询课程号,课程名称,平均成绩和及格率,并按各科平均成绩从低到高和及格率的百分数从高到低顺序
+
+[source,sql]
+----
+SELECT t.CID AS 课程号,max(course.Cname)AS 课程名,isnull(AVG(score),0) AS 平均成绩
+,100 * SUM(CASE WHEN isnull(score,0)>=60 THEN 1 ELSE 0 END)/COUNT(*) AS 及格百分数
+FROM SC T,Course
+where t.CID=course.CID
+GROUP BY t.CID
+ORDER BY 100 * SUM(CASE WHEN isnull(score,0)>=60 THEN 1 ELSE 0 END)/COUNT(*) DESC
+----
+
+20、查询如下课程平均成绩和及格率的百分数(用"1行"显示): 企业管理(001),马克思(002),OO&UML (003),数据库(004)
+
+[source,sql]
+----
+SELECT SUM(CASE WHEN CID ='001' THEN score ELSE 0 END)/SUM(CASE CID WHEN '001' THEN 1 ELSE 0 END) AS 企业管理平均分
+,100 * SUM(CASE WHEN CID = '001' AND score >= 60 THEN 1 ELSE 0 END)/SUM(CASE WHEN CID = '001' THEN 1 ELSE 0 END) AS 企业管理及格百分数
+,SUM(CASE WHEN CID = '002' THEN score ELSE 0 END)/SUM(CASE CID WHEN '002' THEN 1 ELSE 0 END) AS 马克思平均分
+,100 * SUM(CASE WHEN CID = '002' AND score >= 60 THEN 1 ELSE 0 END)/SUM(CASE WHEN CID = '002' THEN 1 ELSE 0 END) AS 马克思及格百分数
+,SUM(CASE WHEN CID = '003' THEN score ELSE 0 END)/SUM(CASE CID WHEN '003' THEN 1 ELSE 0 END) AS UML平均分
+,100 * SUM(CASE WHEN CID = '003' AND score >= 60 THEN 1 ELSE 0 END)/SUM(CASE WHEN CID = '003' THEN 1 ELSE 0 END) AS UML及格百分数
+,SUM(CASE WHEN CID = '004' THEN score ELSE 0 END)/SUM(CASE CID WHEN '004' THEN 1 ELSE 0 END) AS 数据库平均分
+,100 * SUM(CASE WHEN CID = '004' AND score >= 60 THEN 1 ELSE 0 END)/SUM(CASE WHEN CID = '004' THEN 1 ELSE 0 END) AS 数据库及格百分数
+FROM SC
+----
+
+21、查询不同老师所教不同课程平均分从高到低显示
+
+[source,sql]
+----
+SELECT max(Z.TID) AS 教师ID,MAX(Z.Tname) AS 教师姓名,C.CID AS 课程ＩＤ,MAX(C.Cname) AS 课程名称,AVG(Score) AS 平均成绩
+FROM SC AS T,Course AS C ,Teacher AS Z
+where T.CID=C.CID and C.TID=Z.TID
+GROUP BY C.CID
+ORDER BY AVG(Score) DESC
+----
+
+22、查询如下课程成绩第 3 名到第 6 名的学生成绩单: 企业管理(001),马克思(002),UML (003),数据库(004)
+[学生ID],[学生姓名],企业管理,马克思,UML,数据库,平均成绩
+
+[source,sql]
+----
+SELECT DISTINCT top 3
+SC.SID As 学生学号,
+Student.Sname AS 学生姓名 ,
+T1.score AS 企业管理,
+T2.score AS 马克思,
+T3.score AS UML,
+T4.score AS 数据库,
+ISNULL(T1.score,0) + ISNULL(T2.score,0) + ISNULL(T3.score,0) + ISNULL(T4.score,0) as 总分
+FROM Student,SC LEFT JOIN SC AS T1
+ON SC.SID = T1.SID AND T1.CID = '001'
+LEFT JOIN SC AS T2
+ON SC.SID = T2.SID AND T2.CID = '002'
+LEFT JOIN SC AS T3
+ON SC.SID = T3.SID AND T3.CID = '003'
+LEFT JOIN SC AS T4
+ON SC.SID = T4.SID AND T4.CID = '004'
+WHERE student.SID=SC.SID and
+ISNULL(T1.score,0) + ISNULL(T2.score,0) + ISNULL(T3.score,0) + ISNULL(T4.score,0)
+NOT IN
+(SELECT
+ DISTINCT
+ TOP 15 WITH TIES
+ ISNULL(T1.score,0) + ISNULL(T2.score,0) + ISNULL(T3.score,0) + ISNULL(T4.score,0)
+ FROM sc
+ LEFT JOIN sc AS T1
+ ON sc.SID = T1.SID AND T1.CID = 'k1'
+ LEFT JOIN sc AS T2
+ ON sc.SID = T2.SID AND T2.CID = 'k2'
+ LEFT JOIN sc AS T3
+ ON sc.SID = T3.SID AND T3.CID = 'k3'
+ LEFT JOIN sc AS T4
+ ON sc.SID = T4.SID AND T4.CID = 'k4'
+ ORDER BY ISNULL(T1.score,0) + ISNULL(T2.score,0) + ISNULL(T3.score,0) + ISNULL(T4.score,0) DESC);
+----
+
+23、统计各科成绩,各分数段人数:课程ID,课程名称,[100-85],[85-70],[70-60],[ <60]
+
+[source,sql]
+----
+SELECT SC.CID as 课程ID, Cname as 课程名称
+,SUM(CASE WHEN score BETWEEN 85 AND 100 THEN 1 ELSE 0 END) AS [100 - 85]
+,SUM(CASE WHEN score BETWEEN 70 AND 85 THEN 1 ELSE 0 END) AS [85 - 70]
+,SUM(CASE WHEN score BETWEEN 60 AND 70 THEN 1 ELSE 0 END) AS [70 - 60]
+,SUM(CASE WHEN score < 60 THEN 1 ELSE 0 END) AS [60 -]
+FROM SC,Course
+where SC.CID=Course.CID
+GROUP BY SC.CID,Cname;
+----
+
+24、查询学生平均成绩及其名次
+
+[source,sql]
+----
+SELECT 1+(SELECT COUNT( distinct 平均成绩)
+          FROM (SELECT SID,AVG(score) AS 平均成绩
+                FROM SC
+                GROUP BY SID
+               ) AS T1
+          WHERE 平均成绩> T2.平均成绩) as 名次,
+SID as 学生学号,平均成绩
+FROM (SELECT SID,AVG(score) 平均成绩
+      FROM SC
+      GROUP BY SID
+     ) AS T2
+ORDER BY 平均成绩desc;
+----
+
+25、查询各科成绩前三名的记录:(不考虑成绩并列情况)
+
+[source,sql]
+----
+SELECT t1.SID as 学生ID,t1.CID as 课程ID,Score as 分数
+FROM SC t1
+WHERE score IN (SELECT TOP 3 score
+                FROM SC
+                WHERE t1.CID= CID
+                ORDER BY score DESC
+               )
+ORDER BY t1.CID;
+----
+
+26、查询每门课程被选修的学生数
+
+[source,sql]
+----
+select Cid,count(SID) from sc group by CID;
+----
+
+27、查询出只选修了一门课程的全部学生的学号和姓名
+
+[source,sql]
+----
+select SC.SID,Student.Sname,count(CID) AS 选课数
+from SC ,Student
+where SC.SID=Student.SID group by SC.SID ,Student.Sname having count(CID)=1;
+----
+
+28、查询男生、女生人数
+
+[source,sql]
+----
+Select count(Ssex) as 男生人数 from Student group by Ssex having Ssex='男';
+Select count(Ssex) as 女生人数 from Student group by Ssex having Ssex='女';
+----
+
+29、查询姓“张”的学生名单
+
+[source,sql]
+----
+SELECT Sname FROM Student WHERE Sname like '张%';
+----
+
+30、查询同名学生名单,并统计同名人数
+
+[source,sql]
+----
+select Sname,count(*) from Student group by Sname having count(*)>1;
+----
+
+31、1981年出生的学生名单(注:Student表中Sage列的类型是datetime)
+
+[source,sql]
+----
+select Sname, CONVERT(char (11),DATEPART(year,Sage)) as age
+from student
+where CONVERT(char(11),DATEPART(year,Sage))='1981';
+----
+
+32、查询每门课程的平均成绩,结果按平均成绩升序排列,平均成绩相同时,按课程号降序排列
+
+[source,sql]
+----
+Select CID,Avg(score) from SC group by CID order by Avg(score),CID DESC ;
+----
+
+33、查询平均成绩大于85的所有学生的学号、姓名和平均成绩
+
+[source,sql]
+----
+select Sname,SC.SID ,avg(score)
+from Student,SC
+where Student.SID=SC.SID group by SC.SID,Sname having avg(score)>85;
+----
+
+34、查询课程名称为“数据库”,且分数低于60的学生姓名和分数
+
+[source,sql]
+----
+Select Sname,isnull(score,0)
+from Student,SC,Course
+where SC.SID=Student.SID and SC.CID=Course.CID and Course.Cname='数据库'and score <60;
+----
+
+35、查询所有学生的选课情况; (学号,姓名,课程编号,课程名字)
+
+[source,sql]
+----
+SELECT SC.SID,SC.CID,Sname,Cname
+FROM SC,Student,Course
+where SC.SID=Student.SID and SC.CID=Course.CID ;
+----
+
+36、查询任何一门课程成绩在70分以上的学号、姓名、课程编号和分数;
+
+[source,sql]
+----
+SELECT distinct student.SID,student.Sname,SC.CID,SC.score
+FROM student,Sc
+WHERE SC.score>=70 AND SC.SID=student.SID;
+----
+
+37、查询学生学号,以及其不及格的课程,并按课程号从大到小排列
+
+[source,sql]
+----
+select sid,Cid from sc where score <60 order by CID ;
+----
+
+38、查询课程编号为003且课程成绩在80分以上的学生的学号和姓名;
+
+[source,sql]
+----
+select SC.SID,Student.Sname from SC,Student where SC.SID=Student.SID and Score>80 and CID='003';
+----
+
+39、求选了课程的学生人数
+
+[source,sql]
+----
+select count(*) from sc;
+----
+
+40、查询选修“叶平”老师所授课程的学生中,成绩最高的学生姓名及其成绩
+
+[source,sql]
+----
+select Student.Sname,score
+from Student,SC,CourseC,Teacher
+where Student.SID=SC.SID and SC.CID=C.CID and C.TID=Teacher.TID and Teacher.Tname='叶平' and SC.score=(select max(score)from SC where CID=C.CID );
+----
+
+41、查询各个课程及相应的选修人数
+
+[source,sql]
+----
+select count(*) from sc group by CID;
+----
+
+42、查询不同课程成绩相同的学生的学号、课程号、学生成绩
+
+[source,sql]
+----
+select distinct A.SID,B.score from SC A ,SC B where A.Score=B.Score and A.CID <>B.CID ;
+----
+
+
+43、查询每门功成绩最好的前两名
+
+[source,sql]
+----
+SELECT t1.SID as 学生ID,t1.CID as 课程ID,Score as 分数
+FROM SC t1
+WHERE score IN (SELECT TOP 2 score
+                FROM SC
+                WHERE t1.CID= CID
+                ORDER BY score DESC
+               )
+ORDER BY t1.CID;
+----
+
+44、统计每门课程的学生选修人数(超过10人的课程才统计).要求输出课程号和选修人数,查询结果按人数降序排列,查询结果按人数降序排列,若人数相同,按课程号升序排列
+
+[source,sql]
+----
+select CID as 课程号,count(*) as 人数
+from sc
+group by CID
+order by count(*) desc,Cid
+----
+
+45、检索至少选修两门课程的学生学号
+
+[source,sql]
+----
+select SID
+from sc
+group by Sid
+having count(*) > = 2
+----
+
+46、查询全部学生都选修的课程的课程号和课程名
+
+[source,sql]
+----
+select CID,Cname
+from Course
+where CID in (select Cid from sc group by Cid)
+----
+
+47、查询没学过“叶平”老师讲授的任一门课程的学生姓名
+
+[source,sql]
+----
+select Sname from Student where SID not in (select SID from Course,Teacher,SC where Course.TID=Teacher.TID and SC.CID=course.CID and Tname='叶平');
+----
+
+48、查询两门以上不及格课程的同学的学号及其平均成绩
+
+[source,sql]
+----
+select SID,avg(isnull(score,0)) from SC where SID in (select SID from SC where score <60 group by SID having count(*)>2)group by SID;
+----
+
+== 案例2
+
+=== SQL1
+
+用一条 SQL 语句查询出每门课都大于 80 分的学生姓名
+
+|===
+| name |kecheng | fenshu
+
+| 张三 | 语文 | 81
+| 张三 | 数学 | 75
+| 李四 | 语文 | 76
+| 李四 | 数学 | 90
+| 王五 | 语文 | 81
+| 王五 | 数学 | 100
+| 王五 | 英语 | 90
+|===
+
+答：
+
+* select distinct name from table where name not in (select distinct name from table where fenshu<=80)
+* select name from table group by name having min(fenshu)>80
+
+=== SQL2
+
+删除除了自动编号不同，其他都相同的学生冗余信息
+
+学生表 如下:
+
+|===
+| 自动编号 | 学号 | 姓名 | 课程编号 | 课程名称 | 分数
+
+| 1 | 2005001 | 张三 | 0001 | 数学 | 69
+| 2 | 2005002 | 李四 | 0001 | 数学 | 89
+| 3 | 2005001 | 张三 | 0001 | 数学 | 69
+|===
+
+答： delete tablename where 自动编号 not in(select min(自动编号) from tablename group by 学号, 姓名, 课程编号, 课
+程名称, 分数)
+
+=== SQL3
+
+一个叫 team 的表，里面只有一个字段 name,一共有4 条纪录，分别是 a,b,c,d,对应四个球队，现在四个球队进行比赛，
+用一条 sql 语句显示所有可能的比赛组合.
+
+答：select a.name, b.name from team a, team b where a.name < b.name
+
+=== SQL4
+
+怎么把这样一个表
+
+|===
+| year | month | amount
+
+| 1991 | 1 | 1.1
+| 1991 | 2 | 1.2
+| 1991 | 3 | 1.3
+| 1991 | 4 | 1.4
+| 1992 | 1 | 2.1
+| 1992 | 2 | 2.2
+| 1992 | 3 | 2.3
+| 1992 | 4 | 2.4
+|===
+
+查成这样一个结果
+
+|===
+| year | m1 | m2 | m3 | m4
+
+| 1991 | 1.1 | 1.2 | 1.3 | 1.4
+| 1992 | 2.1 | 2.2 | 2.3 | 2.4
+|===
+
+答：select year,
+(select amount from aaa m where month=1 and m.year=aaa.year) as m1,
+(select amount from aaa m where month=2 and m.year=aaa.year) as m2,
+4. (select amount from aaa m where month=3 and m.year=aaa.year) as m3,
+5. (select amount from aaa m where month=4 and m.year=aaa.year) as m4
+6. from aaa group by year
+
+=== SQL5
+
+说明：复制表(只复制结构,源表名：a 新表名：b)
+
+答：
+
+SQL: select * into b from a where 1<>1 (where1=1，拷贝表结构和数据内容)
+ORACLE：create table b As Select * from a where 1=2
+
+[<>（不等于）(SQL Server Compact) 比较两个表达式。 当使用此运算符比较非空表达式时，如果左操作数不等于右操作数，则结果为 TRUE。 否则，
+结果为 FALSE。]
+
+=== SQL6
+
+原表：
+
+|===
+| courseid | coursename | score
+
+| 1 | java | 70
+| 2 | oracle | 90
+| 3 | xml | 40
+| 4 | jsp | 30
+| 5 | servlet | 80
+|===
+
+为了便于阅读,查询此表后的结果显式如下(及格分数为 60):
+
+|===
+| courseid | coursename | score | mark
+| 1 | java | 70 | pass
+| 2 | oracle | 90 | pass
+| 3 | xml | 40 | fail
+| 4 | jsp | 30 | fail
+| 5 | servlet | 80 | pass
+|===
+
+写出此查询语句
+
+答：
+
+select courseid, coursename ,score ,if(score>=60, "pass","fail") as mark from course
+
+=== 例 7：
+表名：购物信息
+
+|===
+| 购物人 | 商品名称 | 数量
+| A | 甲 | 2
+| B | 乙 | 4
+| C | 丙 | 1
+| A | 丁 | 2
+| B | 丙 | 5
+|===
+
+给出所有购入商品为两种或两种以上的购物人记录
+
+答：
+
+select * from 购物信息 where 购物人 in (select 购物人 from 购物信息 group by 购物人 having count(*) >= 2);
+
+=== 例 8：
+
+info 表
+
+|===
+| date | result
+| 2005-05-09 | win
+| 2005-05-09 | lose
+| 2005-05-09 | lose
+| 2005-05-09 | lose
+| 2005-05-10 | win
+| 2005-05-10 | lose
+| 2005-05-10 | lose
+|===
+
+如果要生成下列结果, 该如何写 sql 语句?
+
+|===
+| date | win | lose
+| 2005-05-09 | 2 | 2
+| 2005-05-10 | 1 | 2
+|===
+
+答 1：
+select date, sum(case when result = "win" then 1 else 0 end) as "win", sum(case when result = "lose" then
+1 else 0 end) as "lose" from info group by date;
+
+答 2：
+select a.date, a.result as win, b.result as lose
+from
+(select date, count(result) as result from info where result = "win" group by date) as a
+join
+(select date, count(result) as result from info where result = "lose" group by date) as b
+on a.date = b.date;

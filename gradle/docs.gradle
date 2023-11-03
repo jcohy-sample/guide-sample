@@ -1,7 +1,7 @@
 apply plugin: "com.jcohy.docs"
 apply plugin: "com.jcohy.oss-upload"
 
-description = "Jcohy Study Algorithm Sample"
+description = "Jcohy Study Guide Sample"
 
 
 asciidoctor {

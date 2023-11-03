@@ -1,0 +1,50 @@
+[[]]
+== Kafka
+
+== Kafka 丢不丢数据
+
+Producer 角度
+
+* acks=0，生产者发送过来数据就不管了，可靠性差，效率高；
+* acks=1，生产者发送过来数据Leader应答，可靠性中等，效率中等；
+* acks=-1，生产者发送过来数据 Leader 和 ISR 队列里面所有 Follwer 应答，可靠性高，效率低；
+
+在生产环境中，acks=0 很少使用；acks=1，一般用于传输普通日志，允许丢个别数据； acks=-1，一般用于传输和钱相关的数据，对可靠性要求比较高的场景。
+
+Broker 角度
+
+* 副本数大于等于 2。
+* min.insync.replicas 大于等于 2。
+
+== Kafka 的 ISR 副本同步队列
+
+ISR（In-Sync Replicas），副本同步队列。如果 Follower 长时间未向 Leader 发送通信请
+求或同步数据，则该 Follower 将被踢出 ISR。该时间阈值由 `replica.lag.time.max.ms` 参数设
+定，默认 30s。
+
+任意一个维度超过阈值都会把 Follower 剔除出 ISR，存入 OSR（Outof-Sync Replicas）列表，新加入的 Follower 也会先存放在 OSR 中。
+
+Kafka 分区中的所有副本统称为 AR = ISR + OSR
+
+== Kafka 如何保证数据有序 or 怎么解决乱序
+
+* Kafka 最多只保证单分区内的消息是有序的，所以如果要保证业务全局严格有序，就要设置 Topic 为单分区。
+
+单分区内，可保证数据有序，但也不是绝对的。例如，某批次的数据发送失败后，进行了重试，就可能出现后边的批次先于它到达的情况。
+
+方案一：
+
+禁止重试，需设置以下参数
+
+* 设置 retries 等于0
+
+说明：数据出现乱序的根本原因是，失败重试，关闭重试，则可保证数据是有序的。但是这样做，可能会导致数据的丢失。
+
+方案二：
+
+启用幂等，需设置以下参数
+
+* 设置 enable.idempotence=true，启用幂等
+* 设置 max.in.flight.requests.per.connection，1.0.X 之后，小于等于 5
+* 设置 retries，保证其大于 0
+* 设置 acks，保证其为 -1
